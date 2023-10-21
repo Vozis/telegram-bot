@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int    @id @default(autoincrement())
+  telegramId Int    @map("telegram_id")
+  firstName  String @map("first_name")
+  lastName   String @map("last_name")
+  userName   String @unique @map("user_name")
+
+  group   Group @relation(fields: [groupId], references: [id])
+  groupId Int   @map("group_id")
+
+  isAdmin Boolean @default(false) @map("is_admin")
+
+  @@map("users")
+}
+
+model Group {
+  id         Int    @id @default(autoincrement())
+  name       String @unique
+  level      Level  @default(BASE)
+  telegramId Int    @map("telegram_id")
+
+  user User[]
+
+  @@map("groups")
+}
+
+enum Level {
+  BASE
+  INTERMEDIATE
+  ADVANCED
+}

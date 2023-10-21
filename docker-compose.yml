@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: postgres-db-bot
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+    ports:
+      - 5434:5434
+    networks:
+      - bot-network
+    volumes:
+      - db-bot:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container-bot
+    restart: always
+    ports:
+      - 5050:85
+    environment:
+      PGADMIN_DEFAULT_EMAIL: sizov.ilya1996@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    volumes:
+      - pgadmin-data-bot:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  bot:
+    container_name: bot-app
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 4200:4200
+    depends_on:
+      - postgres
+    networks:
+      - bot-network
+
+volumes:
+  db-bot:
+  pgadmin-data-bot:
+
+networks:
+  bot-network:

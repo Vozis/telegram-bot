@@ -51,15 +51,15 @@ export class BotService {
   async addUser(@Ctx() ctx: ContextInterface) {
     const group = await this.groupService.getByTelegramId(ctx.chat.id);
 
-    const addUser: Omit<User, 'id'> = {
+    const addUser: any = {
       //@ts-ignore
-      firstName: ctx.message.new_chat_member.first_name || 'empty',
+      firstName: ctx.message.new_chat_participant.first_name || 'empty',
       //@ts-ignore
-      lastName: ctx.message.new_chat_member.last_name || 'empty',
+      lastName: ctx.message.new_chat_participant.last_name || 'empty',
       //@ts-ignore
-      userName: ctx.message.new_chat_member.username,
+      userName: ctx.message.new_chat_participant.username,
       //@ts-ignore
-      telegramId: ctx.message.new_chat_member.id,
+      telegramId: ctx.message.new_chat_participant.id,
       isAdmin: false,
       groupId: group.id,
     };
@@ -67,14 +67,13 @@ export class BotService {
     const _user = await this.userService.getByTelegramId(addUser.telegramId);
 
     if (_user) {
-      return ctx.reply(
+      await ctx.reply(
         `Данный пользователь "${_user.userName}" уже добавлен в БД.`,
       );
+      return;
     }
 
-    // console.log('newUser: ', addUser);
-
-    await this.userService.create({
+    const newUser = await this.userService.create({
       firstName: addUser.firstName,
       lastName: addUser.lastName,
       userName: addUser.userName,
@@ -83,11 +82,20 @@ export class BotService {
       groupId: addUser.groupId,
     });
 
+    await ctx.reply(`Данный пользователь "${newUser.userName}" добавлен в БД.`);
+
     return;
   }
 
   @On('left_chat_member')
   async deleteUser(@Ctx() ctx: ContextInterface) {
+    const _user = await this.userService.getByTelegramId(
+      //@ts-ignore
+      ctx.message.left_chat_member.id,
+    );
+
+    if (!_user) return;
+
     const deletedUser = await this.userService.remove(
       //@ts-ignore
       ctx.message.left_chat_member.id,
@@ -110,7 +118,11 @@ export class BotService {
 
     if (userIsAdmin) {
       await ctx.reply('Что ты хочешь сделать?', actionButtons());
+      return;
     }
+
+    await ctx.reply('У вас нет прав администратора');
+    return;
   }
 
   @Action('createGroup')
@@ -131,11 +143,65 @@ export class BotService {
       telegramId: groupInfo.id,
     });
 
-    // return ctx.reply(`Создана группа ${newGroup.name}`);
+    await ctx.reply(`Создана группа ${newGroup.name}`);
+    return;
+  }
+
+  @Action('shareInfo')
+  async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
+    // await ctx.reply(JSON.stringify(sender, null, 2));
+    const group = await this.groupService.getByTelegramId(ctx.chat.id);
+
+    const addUser: any = {
+      firstName: ctx.callbackQuery.from.first_name || 'empty',
+      lastName: ctx.callbackQuery.from.last_name || 'empty',
+      userName: ctx.callbackQuery.from.username || 'empty',
+      telegramId: ctx.callbackQuery.from.id,
+      isAdmin: true,
+      groupId: group.id,
+    };
+
+    const _user = await this.userService.getByTelegramId(addUser.telegramId);
+
+    if (_user) {
+      await ctx.reply(
+        `Данный администратор "${_user.userName}" уже добавлен в БД.`,
+      );
+
+      return;
+    }
+
+    await this.userService.create({
+      firstName: addUser.firstName,
+      lastName: addUser.lastName,
+      userName: addUser.userName,
+      telegramId: addUser.telegramId,
+      isAdmin: addUser.isAdmin,
+      groupId: addUser.groupId,
+    });
+
+    return;
+  }
+
+  @Action('addAdminGroup')
+  async toggleAdminGroup(@Ctx() ctx: ContextInterface) {
+    const group = await this.groupService.getByTelegramId(ctx.chat.id);
+
+    const result = await this.userService.toggleGroup(
+      ctx.callbackQuery.from.id,
+      group.id,
+    );
+
+    if (result) {
+      await ctx.reply(`Группа ${group.name} добавлена к данным админа`);
+      return;
+    }
+
+    await ctx.reply(`Группа ${group.name} удалена из данных админа`);
+    return;
   }
 
   //  Private methods =================================================================
-
   private async isAdmin(chatId: number, userId: number, ctx: ContextInterface) {
     return new Promise((resolve, reject) => {
       ctx.telegram

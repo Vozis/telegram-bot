@@ -7,7 +7,13 @@ export const UserType: Prisma.UserSelect = {
   firstName: true,
   lastName: true,
   isAdmin: true,
-  groupId: true,
+  groups: {
+    select: {
+      name: true,
+      id: true,
+      telegramId: true,
+    },
+  },
 };
 
 export type UserSelect = Prisma.UserGetPayload<{

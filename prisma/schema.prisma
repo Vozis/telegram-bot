@@ -12,9 +12,9 @@ datasource db {
 
 model User {
   id         Int    @id @default(autoincrement())
-  telegramId Int    @map("telegram_id")
-  firstName  String @map("first_name")
-  lastName   String @map("last_name")
+  telegramId Float  @unique @map("telegram_id")
+  firstName  String @default("empty") @map("first_name")
+  lastName   String @default("empty") @map("last_name")
   userName   String @unique @map("user_name")
 
   group   Group @relation(fields: [groupId], references: [id])
@@ -29,7 +29,7 @@ model Group {
   id         Int    @id @default(autoincrement())
   name       String @unique
   level      Level  @default(BASE)
-  telegramId Int    @map("telegram_id")
+  telegramId Float  @unique @map("telegram_id")
 
   user User[]
 

@@ -17,8 +17,7 @@ model User {
   lastName   String @default("empty") @map("last_name")
   userName   String @unique @map("user_name")
 
-  group   Group @relation(fields: [groupId], references: [id])
-  groupId Int   @map("group_id")
+  groups Group[] @relation("GroupToUser")
 
   isAdmin Boolean @default(false) @map("is_admin")
 
@@ -31,7 +30,7 @@ model Group {
   level      Level  @default(BASE)
   telegramId Float  @unique @map("telegram_id")
 
-  user User[]
+  user User[] @relation("GroupToUser")
 
   @@map("groups")
 }

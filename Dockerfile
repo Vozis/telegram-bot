@@ -1,17 +1,24 @@
-FROM node:18-alpine3.18
+FROM node:18-alpine
 
 MAINTAINER ilya <sizov.ilya1996@gmail.com>
 
-RUN apk update && apk add openssl nodejs
+RUN apk update && apk add openssl
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+ENV NODE_ENV production
 
-RUN npm install
+COPY package*.json ./
 
 COPY . .
 
+RUN npm ci && npm cache clean --force
+
 RUN npm run prisma:generate
 
-CMD ["npm", "run", "start:dev"]
+RUN npm run build
+
+USER node
+
+#CMD ["npm", "run", "start:dev"]
+CMD ["node", "dist/main"]

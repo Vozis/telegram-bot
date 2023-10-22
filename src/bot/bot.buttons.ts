@@ -1,18 +1,18 @@
-import { Markup, Telegraf } from 'telegraf';
+import { Markup } from 'telegraf';
 
 export function actionButtons() {
   return Markup.inlineKeyboard([
     [{ text: 'Создать группу', callback_data: 'createGroup' }],
-    [{ text: 'Добавить участников в БД', callback_data: 'addUsersToGroup' }],
   ]);
-  // return Markup.keyboard(
-  //   [
-  //     Markup.button.callback('Список дел', 'list'),
-  //     Markup.button.callback('Редактирование', 'edit'),
-  //     Markup.button.callback('Удаление', 'delete'),
-  //   ],
-  //   {
-  //     columns: 3,
-  //   },
-  // );
 }
+
+// return Markup.keyboard(
+//   [
+//     Markup.button.callback('Список дел', 'list'),
+//     Markup.button.callback('Редактирование', 'edit'),
+//     Markup.button.callback('Удаление', 'delete'),
+//   ],
+//   {
+//     columns: 3,
+//   },
+// );

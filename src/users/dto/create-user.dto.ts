@@ -1,14 +1,22 @@
-import { IsBoolean, IsEnum, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateUserDto {
   @IsString({
     message: 'Имя должно быть строкой',
   })
+  @IsOptional()
   firstName?: string;
 
   @IsString({
     message: 'Фамилия должно быть строкой',
   })
+  @IsOptional()
   lastName?: string;
 
   @IsString({

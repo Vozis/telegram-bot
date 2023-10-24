@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -9,7 +9,18 @@ export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
-    const newUser = await this.prismaService.user.create({
+    const _user = await this.prismaService.user.findUnique({
+      where: {
+        telegramId: createUserDto.telegramId,
+      },
+    });
+
+    if (_user)
+      throw new BadRequestException(
+        `Данный пользователь "${_user.userName}" уже добавлен в БД.`,
+      );
+
+    return this.prismaService.user.create({
       data: {
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
@@ -23,8 +34,6 @@ export class UserService {
         },
       },
     });
-
-    return newUser;
   }
 
   async toggleGroup(telegramId: number, groupId: number) {

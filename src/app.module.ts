@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
-import { BotService } from './bot/bot.service';
+import { BotUpdate } from './bot/bot.update';
 import { AppService } from './app.service';
 import { TelegrafModule } from 'nestjs-telegraf';
 import * as LocalSession from 'telegraf-session-local';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as process from 'process';
 import { AppController } from './app.controller';
-import { GroupModule } from './groups/group.module';
-import { UserModule } from './users/user.module';
+import { GroupModule } from './group/group.module';
+import { UserModule } from './user/user.module';
+import { BotModule } from './bot/bot.module';
+import { LessonModule } from './lesson/lesson.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronJobModule } from './cron-job/cron-job.module';
 
 const sessions = new LocalSession({
   database: 'session.db.json',
@@ -15,14 +19,17 @@ const sessions = new LocalSession({
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TelegrafModule.forRootAsync({
+      botName: 'HelperBot',
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get<string>('BOT_TOKEN'),
         middlewares: [sessions.middleware()],
+        include: [BotModule],
       }),
       inject: [ConfigService],
     }),
@@ -32,8 +39,11 @@ const sessions = new LocalSession({
     // }),
     GroupModule,
     UserModule,
+    BotModule,
+    LessonModule,
+    CronJobModule,
   ],
   controllers: [AppController],
-  providers: [AppService, BotService],
+  providers: [AppService],
 })
 export class AppModule {}

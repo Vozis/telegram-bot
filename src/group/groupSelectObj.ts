@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export const GroupType: Prisma.GroupSelect = {
+export const groupSelectObj: Prisma.GroupSelect = {
   id: true,
   telegramId: true,
   name: true,
@@ -8,5 +8,5 @@ export const GroupType: Prisma.GroupSelect = {
 };
 
 export type GroupSelect = Prisma.GroupGetPayload<{
-  select: typeof GroupType;
+  select: typeof groupSelectObj;
 }>;

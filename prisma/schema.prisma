@@ -21,21 +21,68 @@ model User {
 
   isAdmin Boolean @default(false) @map("is_admin")
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   @@map("users")
 }
 
 model Group {
-  id         Int    @id @default(autoincrement())
-  name       String @unique
-  level      Level  @default(BASE)
-  telegramId Float  @unique @map("telegram_id")
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  level      LevelEnum @default(BASE)
+  telegramId Float     @unique @map("telegram_id")
 
   user User[] @relation("GroupToUser")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lessons  Lesson[]
+  cronJobs CronJob[]
 
   @@map("groups")
 }
 
-enum Level {
+model Lesson {
+  id   Int    @id @default(autoincrement())
+  day  String
+  time Int    @default(720)
+
+  isEnable Boolean @default(true) @map("is_enable")
+  duration Int     @default(90)
+
+  group   Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId Int?
+
+  cronJobs CronJob[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([day, time], name: "compositeTime")
+  @@map("lessons")
+}
+
+model CronJob {
+  id      Int    @id @default(autoincrement())
+  name    String @unique
+  time    String
+  message String @default("Новое уведомление") @db.VarChar(1000)
+
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId Int
+
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("cron_jobs")
+}
+
+enum LevelEnum {
   BASE
   INTERMEDIATE
   ADVANCED

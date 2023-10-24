@@ -3,46 +3,57 @@ import { PrismaService } from '../prisma.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupsDto } from './dto/update-group.dto';
 import { Group } from '@prisma/client';
+import { GroupSelect, groupSelectObj } from './groupSelectObj';
 
 @Injectable()
 export class GroupService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createGroupsDto: CreateGroupDto): Promise<Group> {
+  async create(createGroupsDto: CreateGroupDto): Promise<GroupSelect> {
     const _group = await this.prismaService.group.findUnique({
       where: {
         telegramId: createGroupsDto.telegramId,
       },
+      select: groupSelectObj,
     });
 
-    if (_group) throw new BadRequestException('Tag already exists');
+    if (_group)
+      throw new BadRequestException(`Группа "${_group.name}" уже создана.`);
 
     return this.prismaService.group.create({
       data: {
         name: createGroupsDto.name,
         telegramId: createGroupsDto.telegramId,
       },
+      select: groupSelectObj,
     });
   }
 
-  async getAll(): Promise<Group[]> {
-    return this.prismaService.group.findMany();
+  async getAll(): Promise<GroupSelect[]> {
+    return this.prismaService.group.findMany({
+      select: groupSelectObj,
+    });
   }
 
-  async getByTelegramId(id: number): Promise<Group> {
+  async getByTelegramId(id: number): Promise<GroupSelect> {
     return this.prismaService.group.findUnique({
       where: {
         telegramId: id,
       },
+      select: groupSelectObj,
     });
   }
 
-  async update(id: number, updateGroupsDto: UpdateGroupsDto): Promise<Group> {
-    console.log(updateGroupsDto);
+  async update(
+    id: number,
+    updateGroupsDto: UpdateGroupsDto,
+  ): Promise<GroupSelect> {
+    // console.log(updateGroupsDto);
 
     return this.prismaService.group.update({
       where: { id },
       data: updateGroupsDto,
+      select: groupSelectObj,
     });
   }
 

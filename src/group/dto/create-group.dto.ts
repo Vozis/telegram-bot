@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Level } from '@prisma/client';
+import { LevelEnum } from '@prisma/client';
 
 export class CreateGroupDto {
   @IsString({
@@ -11,7 +11,7 @@ export class CreateGroupDto {
   telegramId: number;
 
   @IsString({ message: 'Неправильный уровень' })
-  @IsEnum(Level)
+  @IsEnum(LevelEnum)
   @IsOptional()
-  level?: Level;
+  level?: LevelEnum;
 }

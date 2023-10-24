@@ -2,9 +2,26 @@ import { Markup } from 'telegraf';
 
 export function actionButtons() {
   return Markup.inlineKeyboard([
-    [{ text: 'Создать группу', callback_data: 'createGroup' }],
-    [{ text: 'Дать инфу о себе', callback_data: 'shareInfo' }],
-    [{ text: 'Добавить группу у админа', callback_data: 'addAdminGroup' }],
+    [{ text: 'Добавить группу в БД', callback_data: 'createGroup' }],
+    [
+      {
+        text: 'Добавить расписание группы',
+        callback_data: 'createGroupSchedule',
+      },
+    ],
+    [{ text: 'Получить расписание для группы', callback_data: 'getSchedule' }],
+    [
+      {
+        text: 'Изменить расписание для группы',
+        callback_data: 'updateSchedule',
+      },
+    ],
+    [
+      {
+        text: 'Получить все установленные уведомления',
+        callback_data: 'getCronJobs',
+      },
+    ],
   ]);
 }
 

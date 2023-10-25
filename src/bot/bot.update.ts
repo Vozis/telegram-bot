@@ -21,18 +21,17 @@ import {
 import { UserService } from '../user/user.service';
 import { adminOptions, userOptions } from './options';
 import { GroupService } from '../group/group.service';
-import { UseFilters, UseGuards } from '@nestjs/common';
+import { OnModuleDestroy, UseFilters, UseGuards } from '@nestjs/common';
 
 import { TelegrafExceptionFilter } from './filters/telegraf-exception.filter';
 import { AdminGuard } from './guards/admin.guard';
 
-import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LessonService } from '../lesson/lesson.service';
 import { CronJobService } from '../cron-job/cron-job.service';
 import { toHoursAndMinutes } from '../utils/functions';
 
 @Update()
-export class BotUpdate {
+export class BotUpdate implements OnModuleDestroy {
   constructor(
     @InjectBot('HelperBot')
     private readonly bot: Telegraf<ContextInterface>,
@@ -53,10 +52,13 @@ export class BotUpdate {
           description: 'Получить расписание',
         },
       ]);
-
+      await ctx.deleteMessage(ctx.message.message_id);
       await ctx
         .reply(
           `Приветствую в нашей группе!. Здесь есть бот, который поможет тебе узнать текущее расписание занятий. (p.s. у меня еще есть косяки, нахожусь в процессе устранения:)`,
+          {
+            disable_notification: true,
+          },
         )
         .then(({ message_id }) => {
           setTimeout(() => ctx.deleteMessage(message_id), 3000);
@@ -111,7 +113,32 @@ export class BotUpdate {
   async showAdmin(@Ctx() ctx: ContextInterface) {
     await ctx.deleteMessage(ctx.message.message_id);
     await ctx
-      .reply('Что ты хочешь сделать?', actionButtons())
+      .reply('Что ты хочешь сделать?', {
+        disable_notification: true,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Добавить группу в БД', callback_data: 'createGroup' }],
+            [
+              {
+                text: 'Добавить расписание группы',
+                callback_data: 'createGroupSchedule',
+              },
+            ],
+            [
+              {
+                text: 'Получить расписание для всех групп',
+                callback_data: 'getScheduleAdmin',
+              },
+            ],
+            [
+              {
+                text: 'Изменить расписание для группы',
+                callback_data: 'updateSchedule',
+              },
+            ],
+          ],
+        },
+      })
       .then(({ message_id }) => {
         setTimeout(() => ctx.deleteMessage(message_id), 10000);
       });
@@ -144,7 +171,7 @@ export class BotUpdate {
       return;
     } catch (err) {
       console.log(err.message);
-      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
+      // await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
       await ctx.replyWithHTML(err.message).then(({ message_id }) => {
         setTimeout(() => ctx.deleteMessage(message_id), 3000);
       });
@@ -172,6 +199,7 @@ export class BotUpdate {
             })
           : 'Пока занятий нет'
       }`,
+        { disable_notification: true },
       )
       .then(({ message_id }) => {
         setTimeout(() => ctx.deleteMessage(message_id), 3000);
@@ -183,23 +211,24 @@ export class BotUpdate {
   // НЕ ИСПОЛЬЗЛУЕТСЯ
   // =================================================================
 
-  @Action('addAdminGroup')
-  async toggleAdminGroup(@Ctx() ctx: ContextInterface) {
-    const group = await this.groupService.getByTelegramId(ctx.chat.id);
-
-    const result = await this.userService.toggleGroup(
-      ctx.callbackQuery.from.id,
-      group.id,
-    );
-
-    if (result) {
-      await ctx.reply(`Группа ${group.name} добавлена к данным админа`);
-      return;
-    }
-
-    await ctx.reply(`Группа ${group.name} удалена из данных админа`);
-    return;
-  }
+  // @UseFilters(TelegrafExceptionFilter)
+  // @Action('addAdminGroup')
+  // async toggleAdminGroup(@Ctx() ctx: ContextInterface) {
+  //   const group = await this.groupService.getByTelegramId(ctx.chat.id);
+  //
+  //   const result = await this.userService.toggleGroup(
+  //     ctx.callbackQuery.from.id,
+  //     group.id,
+  //   );
+  //
+  //   if (result) {
+  //     await ctx.reply(`Группа ${group.name} добавлена к данным админа`);
+  //     return;
+  //   }
+  //
+  //   await ctx.reply(`Группа ${group.name} удалена из данных админа`);
+  //   return;
+  // }
 
   // @On('new_chat_members')
   // async addUser(
@@ -317,6 +346,10 @@ export class BotUpdate {
   // =================================================================
 
   //  Private methods =================================================================
+
+  async onModuleDestroy() {
+    console.log('Конец работы');
+  }
 
   private async isAdmin(chatId: number, userId: number, ctx: ContextInterface) {
     return new Promise((resolve, reject) => {

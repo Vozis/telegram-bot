@@ -7,9 +7,10 @@ import { CreateLessonScene } from './scenes/create-lessons.wizard';
 import { LessonModule } from '../lesson/lesson.module';
 import { CronJobModule } from '../cron-job/cron-job.module';
 import { UpdateLessonScene } from './scenes/update-lessons.wizard';
+import { GetLessonsScene } from './scenes/get-lessons.wizard';
 
 @Module({
-  providers: [BotUpdate, CreateLessonScene, UpdateLessonScene],
+  providers: [BotUpdate, CreateLessonScene, UpdateLessonScene, GetLessonsScene],
   imports: [UserModule, GroupModule, LessonModule, CronJobModule],
 })
 export class BotModule {}

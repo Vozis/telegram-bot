@@ -101,41 +101,43 @@ export class CreateLessonScene {
       if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
       ctx.wizard.state['minutes'] = msg;
       await ctx.wizard.next();
-      return 'Почти готово! По умолчанию установлена продолжительность урока: 90 минут. Отправь "Пробел" для продолжения или новое время в минутах';
+      return 'Почти готово! По умолчанию установлена продолжительность урока: 90 минут. Отправь "90" для продолжения или новое время в минутах';
     } catch (err) {
       console.log(err.message);
       return err.message;
     }
   }
+
+  // @On('text')
+  // @WizardStep(6)
+  // async onDurationCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
+  //   try {
+  //     const regexp = /^[0-9]+$/;
+  //     if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
+  //     ctx.wizard.state['duration'] = msg;
+  //     await ctx.wizard.next();
+  //
+  //     await ctx.reply('Почти готово! Подключить уведомления?', {
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             { text: 'да', callback_data: 'true' },
+  //             { text: 'нет', callback_data: 'false' },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //     return;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //     return err.message;
+  //   }
+  // }
 
   @On('text')
   @WizardStep(6)
-  async onDurationCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
-    try {
-      const regexp = /^[0-9]+$/;
-      if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
-      ctx.wizard.state['duration'] = msg;
-      await ctx.wizard.next();
-      await ctx.reply('Почти готово! Подключить уведомления?', {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: 'да', callback_data: 'true' },
-              { text: 'нет', callback_data: 'false' },
-            ],
-          ],
-        },
-      });
-      return;
-    } catch (err) {
-      console.log(err.message);
-      return err.message;
-    }
-  }
-
-  @On('callback_query')
-  @WizardStep(7)
   async onLessonCreateFinish(
+    @Message('text') msg: any,
     @Ctx()
     ctx: WizardContext & {
       wizard: {
@@ -151,12 +153,15 @@ export class CreateLessonScene {
     },
   ) {
     try {
-      ctx.wizard.state['isEnable'] = JSON.parse(ctx.callbackQuery['data']);
+      const regexp = /^[0-9]+$/;
+      if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
+      ctx.wizard.state['duration'] = msg;
+      // ctx.wizard.state['isEnable'] = JSON.parse(ctx.callbackQuery['data']);
       await ctx.scene.leave();
       await this.lessonService.create({
         day: ctx.wizard.state.day,
         time: +ctx.wizard.state.hour * 60 + +ctx.wizard.state.minutes,
-        isEnable: ctx.wizard.state.isEnable,
+        isEnable: true,
         duration: !!ctx.wizard.state.duration ? +ctx.wizard.state.duration : 90,
         groupId: +ctx.wizard.state.groupInfo.split('|')[1],
       });
@@ -170,6 +175,7 @@ export class CreateLessonScene {
       } минут`;
     } catch (err) {
       console.log(err.message);
+      return err.message;
     }
   }
 

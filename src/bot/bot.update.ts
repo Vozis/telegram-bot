@@ -32,7 +32,6 @@ import { CronJobService } from '../cron-job/cron-job.service';
 import { toHoursAndMinutes } from '../utils/functions';
 
 @Update()
-@UseFilters(TelegrafExceptionFilter)
 export class BotUpdate {
   constructor(
     @InjectBot('HelperBot')
@@ -55,16 +54,35 @@ export class BotUpdate {
         },
       ]);
 
-      return `Приветствую Всех в нашей группе!. Здесь есть бот, который поможет тебе узнать текущее расписание занятий. (p.s. у меня еще есть косяки, нахожусь в процессе устранения:)`;
+      await ctx
+        .reply(
+          `Приветствую в нашей группе!. Здесь есть бот, который поможет тебе узнать текущее расписание занятий. (p.s. у меня еще есть косяки, нахожусь в процессе устранения:)`,
+        )
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+        });
+      return;
       // await ctx.reply('Приветствую в нашей группе!)');
     } catch (err) {
-      console.log(err);
+      console.log(err.message);
+      await ctx
+        .reply(`Хьюстон, у нас проблема. Проверь ошибку в логах`)
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+        });
+      return;
     }
   }
-
+  @UseFilters(TelegrafExceptionFilter)
   @Help()
   async help(@Ctx() ctx: ContextInterface) {
-    console.log(ctx.message);
+    await ctx.deleteMessage(ctx.message.message_id);
+    await ctx
+      .reply('Данный раздел еще на доработке :(')
+      .then(({ message_id }) => {
+        setTimeout(() => ctx.deleteMessage(message_id), 3000);
+      });
+    return;
   }
 
   // Lessons logic =================================================================
@@ -79,16 +97,28 @@ export class BotUpdate {
     await ctx.scene.enter('updateLessonScene');
   }
 
+  @UseGuards(AdminGuard)
+  @Action('getScheduleAdmin')
+  async getScheduleAdmin(@Ctx() ctx: SceneContextInterface) {
+    await ctx.scene.enter('getLessonsScene');
+  }
+
   // Actions =================================================================
 
+  @UseFilters(TelegrafExceptionFilter)
   @UseGuards(AdminGuard)
   @Command('admin')
   async showAdmin(@Ctx() ctx: ContextInterface) {
     await ctx.deleteMessage(ctx.message.message_id);
-    await ctx.reply('Что ты хочешь сделать?', actionButtons());
+    await ctx
+      .reply('Что ты хочешь сделать?', actionButtons())
+      .then(({ message_id }) => {
+        setTimeout(() => ctx.deleteMessage(message_id), 10000);
+      });
     return;
   }
 
+  @UseFilters(TelegrafExceptionFilter)
   @UseGuards(AdminGuard)
   @Action('getCronJobs')
   async getCronJobs(@Ctx() ctx: ContextInterface) {
@@ -102,36 +132,35 @@ export class BotUpdate {
     try {
       const groupInfo = await this.bot.telegram.getChat(ctx.chat.id);
       const newGroup = await this.groupService.create({
-        //@ts-ignore
-        name: groupInfo.title,
+        name: groupInfo['title'],
         telegramId: groupInfo.id,
       });
-      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
+      await ctx.deleteMessage(ctx.message.message_id);
       await ctx
         .reply(`Создана группа ${newGroup.name}`)
         .then(({ message_id }) => {
           setTimeout(() => ctx.deleteMessage(message_id), 3000);
         });
       return;
-      // await ctx.reply(`Создана группа ${newGroup.name}`);
     } catch (err) {
       console.log(err.message);
       await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-      return err.message;
+      await ctx.replyWithHTML(err.message).then(({ message_id }) => {
+        setTimeout(() => ctx.deleteMessage(message_id), 3000);
+      });
+      return;
     }
   }
-
+  @UseFilters(TelegrafExceptionFilter)
   @Command('get_schedule')
   async getSchedule(@Ctx() ctx: ContextInterface) {
-    try {
-      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
-      const isAdmin = await this.isAdmin(ctx.chat.id, ctx.from.id, ctx);
+    const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
 
-      const lessons = await this.lessonService.getByGroupId(groupInfo.id);
-      await ctx.deleteMessage(ctx.message.message_id);
-      await ctx
-        .replyWithHTML(
-          `
+    const lessons = await this.lessonService.getByGroupId(groupInfo.id);
+    await ctx.deleteMessage(ctx.message.message_id);
+    await ctx
+      .replyWithHTML(
+        `
       <b>Твое расписание: </b>
       ${
         lessons.length > 0
@@ -141,77 +170,16 @@ export class BotUpdate {
             })
           : 'Пока занятий нет'
       }`,
-        )
-        .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
-        });
-    } catch (err) {
-      console.log(err.message);
-    }
-  }
-
-  @UseGuards(AdminGuard)
-  @Action('get_schedule')
-  async getScheduleAdmin(@Ctx() ctx: ContextInterface) {
-    try {
-      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
-      const isAdmin = await this.isAdmin(ctx.chat.id, ctx.from.id, ctx);
-
-      const lessons = await this.lessonService.getByGroupId(groupInfo.id);
-      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-      await ctx
-        .replyWithHTML(
-          `
-      <b>Твое расписание: </b>
-      ${
-        lessons.length > 0
-          ? lessons.map(lesson => {
-              const lessonTime = toHoursAndMinutes(lesson.time);
-              return `<i> - ${lesson.day} ${lessonTime.hours}:${
-                lessonTime.minutes
-              }, ${isAdmin ? `уведомления: ${lesson.isEnable}` : ''}</i> \n`;
-            })
-          : 'Пока занятий нет'
-      }`,
-        )
-        .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
-        });
-    } catch (err) {
-      console.log(err.message);
-    }
-  }
-
-  @Action('shareInfo')
-  async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
-    try {
-      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
-
-      const addUser: CreateUserDto = {
-        firstName: ctx.callbackQuery.from.first_name || 'empty',
-        lastName: ctx.callbackQuery.from.last_name || 'empty',
-        userName: ctx.callbackQuery.from.username || 'empty',
-        telegramId: ctx.callbackQuery.from.id,
-        isAdmin: true,
-        groupId: groupInfo.id,
-      };
-
-      const newUser = await this.userService.create({
-        firstName: addUser.firstName,
-        lastName: addUser.lastName,
-        userName: addUser.userName,
-        telegramId: addUser.telegramId,
-        isAdmin: addUser.isAdmin,
-        groupId: addUser.groupId,
+      )
+      .then(({ message_id }) => {
+        setTimeout(() => ctx.deleteMessage(message_id), 3000);
       });
-
-      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-      return `В БД добавлен пользователь ${newUser.userName}`;
-    } catch (err) {
-      console.log(err.message);
-      return err.message;
-    }
+    return;
   }
+
+  // =================================================================
+  // НЕ ИСПОЛЬЗЛУЕТСЯ
+  // =================================================================
 
   @Action('addAdminGroup')
   async toggleAdminGroup(@Ctx() ctx: ContextInterface) {
@@ -230,8 +198,6 @@ export class BotUpdate {
     await ctx.reply(`Группа ${group.name} удалена из данных админа`);
     return;
   }
-
-  //  Private methods =================================================================
 
   @On('new_chat_members')
   async addUser(
@@ -281,8 +247,6 @@ export class BotUpdate {
     return;
   }
 
-  // Добавление / удаление пользователей из БД =================================================================
-
   @On('left_chat_member')
   async deleteUser(
     @Ctx()
@@ -306,6 +270,42 @@ export class BotUpdate {
 
     return;
   }
+
+  @Action('shareInfo')
+  async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
+    try {
+      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
+
+      const addUser: CreateUserDto = {
+        firstName: ctx.callbackQuery.from.first_name || 'empty',
+        lastName: ctx.callbackQuery.from.last_name || 'empty',
+        userName: ctx.callbackQuery.from.username || 'empty',
+        telegramId: ctx.callbackQuery.from.id,
+        isAdmin: true,
+        groupId: groupInfo.id,
+      };
+
+      const newUser = await this.userService.create({
+        firstName: addUser.firstName,
+        lastName: addUser.lastName,
+        userName: addUser.userName,
+        telegramId: addUser.telegramId,
+        isAdmin: addUser.isAdmin,
+        groupId: addUser.groupId,
+      });
+
+      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
+      return `В БД добавлен пользователь ${newUser.userName}`;
+    } catch (err) {
+      console.log(err.message);
+      return err.message;
+    }
+  }
+
+  // =================================================================
+  // =================================================================
+
+  //  Private methods =================================================================
 
   private async isAdmin(chatId: number, userId: number, ctx: ContextInterface) {
     return new Promise((resolve, reject) => {

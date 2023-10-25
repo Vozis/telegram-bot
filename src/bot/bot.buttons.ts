@@ -9,19 +9,24 @@ export function actionButtons() {
         callback_data: 'createGroupSchedule',
       },
     ],
-    [{ text: 'Получить расписание для группы', callback_data: 'getSchedule' }],
+    [
+      {
+        text: 'Получить расписание для всех групп',
+        callback_data: 'getScheduleAdmin',
+      },
+    ],
     [
       {
         text: 'Изменить расписание для группы',
         callback_data: 'updateSchedule',
       },
     ],
-    [
-      {
-        text: 'Получить все установленные уведомления',
-        callback_data: 'getCronJobs',
-      },
-    ],
+    // [
+    //   {
+    //     text: 'Получить все установленные уведомления',
+    //     callback_data: 'getCronJobs',
+    //   },
+    // ],
   ]);
 }
 

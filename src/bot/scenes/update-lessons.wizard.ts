@@ -13,7 +13,7 @@ export class UpdateLessonScene {
     private readonly groupService: GroupService,
   ) {}
   @WizardStep(1)
-  async onSceneEnter(@Ctx() ctx: WizardContext) {
+  async onGroupChoose(@Ctx() ctx: WizardContext) {
     try {
       const groupsDb = await this.groupService.getAll();
 
@@ -23,20 +23,24 @@ export class UpdateLessonScene {
       }
 
       await ctx.wizard.next();
-      await ctx.reply(
-        'Удаление занятий со старым расписанием. Для отмены набери "выход". Выбери группу для создания урока (Не забудь заранее добавить нужную группу в БД)',
-        Markup.inlineKeyboard(
-          groupsDb.map(item =>
-            Markup.button.callback(
-              item.name,
-              `${item.name.slice(0, 15)}|${item.id}`,
+      await ctx
+        .reply(
+          'Удаление занятий со старым расписанием. Для отмены набери "выход". Выбери группу для создания урока (Не забудь заранее добавить нужную группу в БД)',
+          Markup.inlineKeyboard(
+            groupsDb.map(item =>
+              Markup.button.callback(
+                item.name,
+                `${item.name.slice(0, 15)}|${item.id}`,
+              ),
             ),
+            {
+              columns: 1,
+            },
           ),
-          {
-            columns: 1,
-          },
-        ),
-      );
+        )
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+        });
       return;
     } catch (err) {
       console.log(err);
@@ -45,7 +49,7 @@ export class UpdateLessonScene {
 
   @On('callback_query')
   @WizardStep(2)
-  async onGroupChoose(
+  async onLessonChoose(
     @Ctx()
     ctx: WizardContext & {
       wizard: {
@@ -61,22 +65,26 @@ export class UpdateLessonScene {
         +ctx.wizard.state.groupInfo.split('|')[1],
       );
       await ctx.wizard.next();
-      await ctx.reply(
-        'Отлично! Выбери нужный урок:',
-        Markup.inlineKeyboard(
-          lessons.map(item => {
-            const lessonTime = toHoursAndMinutes(item.time);
+      await ctx
+        .reply(
+          'Отлично! Выбери нужный урок:',
+          Markup.inlineKeyboard(
+            lessons.map(item => {
+              const lessonTime = toHoursAndMinutes(item.time);
 
-            return Markup.button.callback(
-              `${item.day},${lessonTime.hours}:${lessonTime.minutes}`,
-              `${item.day},${lessonTime.hours}:${lessonTime.minutes}|${item.id}`,
-            );
-          }),
-          {
-            columns: 1,
-          },
-        ),
-      );
+              return Markup.button.callback(
+                `${item.day},${lessonTime.hours}:${lessonTime.minutes}`,
+                `${item.day},${lessonTime.hours}:${lessonTime.minutes}|${item.id}`,
+              );
+            }),
+            {
+              columns: 1,
+            },
+          ),
+        )
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+        });
       return;
     } catch (err) {
       console.log(err);
@@ -86,7 +94,7 @@ export class UpdateLessonScene {
 
   @On('callback_query')
   @WizardStep(3)
-  async onLessonDelete(
+  async onLessonChooseConfirm(
     @Ctx()
     ctx: WizardContext & {
       wizard: {
@@ -100,18 +108,22 @@ export class UpdateLessonScene {
       ctx.wizard.state.lessonInfo = ctx.callbackQuery['data'];
       const lessonInfo = ctx.wizard.state.lessonInfo;
       await ctx.wizard.next();
-      await ctx.reply(
-        `Вы выбрали урок ${lessonInfo.split('|')[0]}. Вы уверены?`,
-        Markup.inlineKeyboard(
-          [
-            Markup.button.callback('Да', 'yes'),
-            Markup.button.callback('Нет', 'no'),
-          ],
-          {
-            columns: 1,
-          },
-        ),
-      );
+      await ctx
+        .reply(
+          `Вы выбрали урок ${lessonInfo.split('|')[0]}. Вы уверены?`,
+          Markup.inlineKeyboard(
+            [
+              Markup.button.callback('Да', 'yes'),
+              Markup.button.callback('Нет', 'no'),
+            ],
+            {
+              columns: 1,
+            },
+          ),
+        )
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+        });
       return;
     } catch (err) {
       console.log(err.message);
@@ -134,8 +146,12 @@ export class UpdateLessonScene {
       const lessonInfo = ctx.wizard.state.lessonInfo;
       await ctx.scene.leave();
       await this.lessonService.remove(+lessonInfo.split('|')[1]);
-
-      return `Удален урок "${lessonInfo.split('|')[0]}"`;
+      await ctx
+        .reply(`Удален урок "${lessonInfo.split('|')[0]}"`)
+        .then(({ message_id }) => {
+          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+        });
+      return;
     } catch (err) {
       console.log(err.message);
     }

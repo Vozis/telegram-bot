@@ -17,6 +17,7 @@ export class LessonService {
     const _lesson = await this.prismaService.lesson.findUnique({
       where: {
         compositeTime: {
+          groupId: createLessonDto.groupId,
           day: createLessonDto.day,
           time: createLessonDto.time,
         },

@@ -73,8 +73,12 @@ export class UpdateLessonScene {
               const lessonTime = toHoursAndMinutes(item.time);
 
               return Markup.button.callback(
-                `${item.day},${lessonTime.hours}:${lessonTime.minutes}`,
-                `${item.day},${lessonTime.hours}:${lessonTime.minutes}|${item.id}`,
+                `${item.day},${lessonTime.hours}:${
+                  lessonTime.minutes === 0 ? '00' : lessonTime.minutes
+                }`,
+                `${item.day},${lessonTime.hours}:${
+                  lessonTime.minutes === 0 ? '00' : lessonTime.minutes
+                }|${item.id}`,
               );
             }),
             {

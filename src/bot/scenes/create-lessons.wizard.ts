@@ -172,6 +172,7 @@ export class CreateLessonScene {
       } минут`;
     } catch (err) {
       console.log(err.message);
+      return err.message;
     }
   }
 

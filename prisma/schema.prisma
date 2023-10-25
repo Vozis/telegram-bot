@@ -60,7 +60,7 @@ model Lesson {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([day, time], name: "compositeTime")
+  @@unique([groupId, day, time], name: "compositeTime")
   @@map("lessons")
 }
 

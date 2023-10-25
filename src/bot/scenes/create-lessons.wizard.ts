@@ -38,7 +38,7 @@ export class CreateLessonScene {
       );
       return;
     } catch (err) {
-      console.log(err);
+      console.log(err.message);
     }
   }
 
@@ -62,8 +62,7 @@ export class CreateLessonScene {
       });
       return;
     } catch (err) {
-      console.log(err);
-      return err.message;
+      console.log(err.message);
     }
   }
 
@@ -89,7 +88,6 @@ export class CreateLessonScene {
       return 'Отлично! Теперь выбери минуты';
     } catch (err) {
       console.log(err.message);
-      return err.message;
     }
   }
 
@@ -104,7 +102,6 @@ export class CreateLessonScene {
       return 'Почти готово! По умолчанию установлена продолжительность урока: 90 минут. Отправь "90" для продолжения или новое время в минутах';
     } catch (err) {
       console.log(err.message);
-      return err.message;
     }
   }
 
@@ -175,7 +172,6 @@ export class CreateLessonScene {
       } минут`;
     } catch (err) {
       console.log(err.message);
-      return err.message;
     }
   }
 
@@ -185,7 +181,11 @@ export class CreateLessonScene {
     ctx: WizardContext,
     @Message('text') msg: string,
   ) {
-    await ctx.scene.leave();
-    return 'Вы вышли из меню создания';
+    try {
+      await ctx.scene.leave();
+      return 'Вы вышли из меню создания';
+    } catch (err) {
+      console.log(err.message);
+    }
   }
 }

@@ -28,7 +28,7 @@ export class GetLessonsScene {
           groupsDb.map(item =>
             Markup.button.callback(
               item.name,
-              `${item.name.slice(0, 15)}|${item.id}`,
+              `${item.name.slice(0, 15)}...|${item.id}`,
             ),
           ),
           {
@@ -38,8 +38,7 @@ export class GetLessonsScene {
       );
       return;
     } catch (err) {
-      console.log(err);
-      return err.message;
+      console.log(err.message);
     }
   }
 
@@ -70,7 +69,9 @@ export class GetLessonsScene {
         lessons.length > 0
           ? lessons.map(lesson => {
               const lessonTime = toHoursAndMinutes(lesson.time);
-              return `<i> - ${lesson.day} ${lessonTime.hours}:${lessonTime.minutes}</i> \n`;
+              return `<i> - ${lesson.day} ${lessonTime.hours}:${
+                lessonTime.minutes === 0 ? '00' : lessonTime.minutes
+              }</i> \n`;
             })
           : 'Пока занятий нет'
       }`,
@@ -79,8 +80,7 @@ export class GetLessonsScene {
           setTimeout(() => ctx.deleteMessage(message_id), 3000);
         });
     } catch (err) {
-      console.log(err);
-      return err.message;
+      console.log(err.message);
     }
   }
 
@@ -90,7 +90,11 @@ export class GetLessonsScene {
     ctx: WizardContext,
     @Message('text') msg: string,
   ) {
-    await ctx.scene.leave();
-    return 'Вы вышли из меню создания';
+    try {
+      await ctx.scene.leave();
+      return 'Вы вышли из меню создания';
+    } catch (err) {
+      console.log(err.message);
+    }
   }
 }

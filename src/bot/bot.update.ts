@@ -166,7 +166,9 @@ export class BotUpdate {
         lessons.length > 0
           ? lessons.map(lesson => {
               const lessonTime = toHoursAndMinutes(lesson.time);
-              return `<i> - ${lesson.day} ${lessonTime.hours}:${lessonTime.minutes}</i> \n`;
+              return `<i> - ${lesson.day} ${lessonTime.hours}:${
+                lessonTime.minutes === 0 ? '00' : lessonTime.minutes
+              }</i> \n`;
             })
           : 'Пока занятий нет'
       }`,
@@ -199,108 +201,117 @@ export class BotUpdate {
     return;
   }
 
-  @On('new_chat_members')
-  async addUser(
-    @Ctx()
-    ctx: ContextInterface & {
-      message: {
-        new_chat_participant: {
-          first_name: string;
-          last_name: string;
-          username: string;
-          id: number;
-        };
-      };
-    },
-  ) {
-    const group = await this.groupService.getByTelegramId(ctx.chat.id);
+  // @On('new_chat_members')
+  // async addUser(
+  //   @Ctx()
+  //   ctx: ContextInterface & {
+  //     message: {
+  //       new_chat_participant: {
+  //         first_name: string;
+  //         last_name: string;
+  //         username: string;
+  //         id: number;
+  //       };
+  //     };
+  //   },
+  // ) {
+  //   try {
+  //     const group = await this.groupService.getByTelegramId(ctx.chat.id);
+  //
+  //     const addUser: any = {
+  //       firstName: ctx.message.new_chat_participant.first_name || 'empty',
+  //       lastName: ctx.message.new_chat_participant.last_name || 'empty',
+  //       userName: ctx.message.new_chat_participant.username,
+  //       telegramId: ctx.message.new_chat_participant.id,
+  //       isAdmin: false,
+  //       groupId: group.id,
+  //     };
+  //
+  //     const _user = await this.userService.getByTelegramId(addUser.telegramId);
+  //
+  //     if (_user) {
+  //       await ctx.reply(
+  //         `Данный пользователь "${_user.userName}" уже добавлен в БД.`,
+  //       );
+  //       return;
+  //     }
+  //
+  //     const newUser = await this.userService.create({
+  //       firstName: addUser.firstName,
+  //       lastName: addUser.lastName,
+  //       userName: addUser.userName,
+  //       telegramId: addUser.telegramId,
+  //       isAdmin: addUser.isAdmin,
+  //       groupId: addUser.groupId,
+  //     });
+  //
+  //     await ctx.reply(
+  //       `Данный пользователь "${newUser.userName}" добавлен в БД.`,
+  //     );
+  //
+  //     return;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //   }
+  // }
 
-    const addUser: any = {
-      firstName: ctx.message.new_chat_participant.first_name || 'empty',
-      lastName: ctx.message.new_chat_participant.last_name || 'empty',
-      userName: ctx.message.new_chat_participant.username,
-      telegramId: ctx.message.new_chat_participant.id,
-      isAdmin: false,
-      groupId: group.id,
-    };
+  // @On('left_chat_member')
+  // async deleteUser(
+  //   @Ctx()
+  //   ctx: ContextInterface & {
+  //     message: {
+  //       left_chat_member: {
+  //         id: number;
+  //       };
+  //     };
+  //   },
+  // ) {
+  //   try {
+  //     const _user = await this.userService.getByTelegramId(
+  //       ctx.message.left_chat_member.id,
+  //     );
+  //
+  //     if (!_user) return;
+  //
+  //     const deletedUser = await this.userService.remove(
+  //       ctx.message.left_chat_member.id,
+  //     );
+  //
+  //     return;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //   }
+  // }
 
-    const _user = await this.userService.getByTelegramId(addUser.telegramId);
-
-    if (_user) {
-      await ctx.reply(
-        `Данный пользователь "${_user.userName}" уже добавлен в БД.`,
-      );
-      return;
-    }
-
-    const newUser = await this.userService.create({
-      firstName: addUser.firstName,
-      lastName: addUser.lastName,
-      userName: addUser.userName,
-      telegramId: addUser.telegramId,
-      isAdmin: addUser.isAdmin,
-      groupId: addUser.groupId,
-    });
-
-    await ctx.reply(`Данный пользователь "${newUser.userName}" добавлен в БД.`);
-
-    return;
-  }
-
-  @On('left_chat_member')
-  async deleteUser(
-    @Ctx()
-    ctx: ContextInterface & {
-      message: {
-        left_chat_member: {
-          id: number;
-        };
-      };
-    },
-  ) {
-    const _user = await this.userService.getByTelegramId(
-      ctx.message.left_chat_member.id,
-    );
-
-    if (!_user) return;
-
-    const deletedUser = await this.userService.remove(
-      ctx.message.left_chat_member.id,
-    );
-
-    return;
-  }
-
-  @Action('shareInfo')
-  async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
-    try {
-      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
-
-      const addUser: CreateUserDto = {
-        firstName: ctx.callbackQuery.from.first_name || 'empty',
-        lastName: ctx.callbackQuery.from.last_name || 'empty',
-        userName: ctx.callbackQuery.from.username || 'empty',
-        telegramId: ctx.callbackQuery.from.id,
-        isAdmin: true,
-        groupId: groupInfo.id,
-      };
-
-      const newUser = await this.userService.create({
-        firstName: addUser.firstName,
-        lastName: addUser.lastName,
-        userName: addUser.userName,
-        telegramId: addUser.telegramId,
-        isAdmin: addUser.isAdmin,
-        groupId: addUser.groupId,
-      });
-
-      await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-      return `В БД добавлен пользователь ${newUser.userName}`;
-    } catch (err) {
-      console.log(err.message);
-      return err.message;
-    }
-  }
+  // @Action('shareInfo')
+  // async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
+  //   try {
+  //     const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
+  //
+  //     const addUser: CreateUserDto = {
+  //       firstName: ctx.callbackQuery.from.first_name || 'empty',
+  //       lastName: ctx.callbackQuery.from.last_name || 'empty',
+  //       userName: ctx.callbackQuery.from.username || 'empty',
+  //       telegramId: ctx.callbackQuery.from.id,
+  //       isAdmin: true,
+  //       groupId: groupInfo.id,
+  //     };
+  //
+  //     const newUser = await this.userService.create({
+  //       firstName: addUser.firstName,
+  //       lastName: addUser.lastName,
+  //       userName: addUser.userName,
+  //       telegramId: addUser.telegramId,
+  //       isAdmin: addUser.isAdmin,
+  //       groupId: addUser.groupId,
+  //     });
+  //
+  //     await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
+  //     return `В БД добавлен пользователь ${newUser.userName}`;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //   }
+  // }
 
   // =================================================================
   // =================================================================

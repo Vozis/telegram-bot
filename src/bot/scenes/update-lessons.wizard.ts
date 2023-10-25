@@ -43,7 +43,7 @@ export class UpdateLessonScene {
         });
       return;
     } catch (err) {
-      console.log(err);
+      console.log(err.message);
     }
   }
 
@@ -87,8 +87,7 @@ export class UpdateLessonScene {
         });
       return;
     } catch (err) {
-      console.log(err);
-      return err.message;
+      console.log(err.message);
     }
   }
 
@@ -163,7 +162,11 @@ export class UpdateLessonScene {
     ctx: WizardContext,
     @Message('text') msg: string,
   ) {
-    await ctx.scene.leave();
-    return 'Вы вышли из меню создания';
+    try {
+      await ctx.scene.leave();
+      return 'Вы вышли из меню создания';
+    } catch (err) {
+      console.log(err.message);
+    }
   }
 }

@@ -70,8 +70,8 @@ model CronJob {
   time    String
   message String @default("Новое уведомление") @db.VarChar(1000)
 
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId Int
+  group   Group @relation(fields: [groupId], references: [telegramId], onDelete: Cascade)
+  groupId Float
 
   lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   lessonId Int

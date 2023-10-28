@@ -83,6 +83,8 @@ export class CreateLessonScene {
   async onHourCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
       if (!+msg) return 'Это не число. Попробуй еще раз';
+      if (+msg < 0 || +msg > 24)
+        return 'Столько часов быть не может! Придется ввести заново';
       ctx.wizard.state['hour'] = +msg;
       await ctx.wizard.next();
       return 'Отлично! Теперь выбери минуты';
@@ -95,8 +97,11 @@ export class CreateLessonScene {
   @WizardStep(5)
   async onMinutesCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
+      // const regexp = /^0?(1[89]|[2-9]\d)$/
       const regexp = /^[0-9]+$/;
       if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
+      if (+msg < 0 || +msg > 59)
+        return 'Столько минут быть не может! Придется ввести заново';
       ctx.wizard.state['minutes'] = msg;
       await ctx.wizard.next();
       return 'Почти готово! По умолчанию установлена продолжительность урока: 90 минут. Отправь "90" для продолжения или новое время в минутах';
@@ -176,7 +181,7 @@ export class CreateLessonScene {
     }
   }
 
-  @Hears('выход')
+  @Hears(['выход', 'Выход'])
   async leaveScene(
     @Ctx()
     ctx: WizardContext,

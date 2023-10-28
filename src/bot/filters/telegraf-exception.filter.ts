@@ -19,11 +19,24 @@ export class TelegrafExceptionFilter implements ExceptionFilter {
 
       await ctx.deleteMessage(ctx.message.message_id);
       console.log('Error: ', JSON.stringify(errorObject, null, 2));
-      await ctx
-        .replyWithHTML(`<b>Хьюстон, у нас проблема. Проверь ошибку в логах</b>`)
-        .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
-        });
+
+      switch (errorObject.message) {
+        case 'Вы не администратор 😡':
+          await ctx
+            .replyWithHTML(`<b>${errorObject.message}</b>`)
+            .then(({ message_id }) => {
+              setTimeout(() => ctx.deleteMessage(message_id), 3000);
+            });
+          break;
+        default:
+          await ctx
+            .replyWithHTML(
+              `<b>Хьюстон, у нас проблема. Проверь ошибку в логах</b>`,
+            )
+            .then(({ message_id }) => {
+              setTimeout(() => ctx.deleteMessage(message_id), 3000);
+            });
+      }
     } else if (ctx.update['callback_query']) {
       const errorObject = ctx.update['message']
         ? {
@@ -40,6 +53,7 @@ export class TelegrafExceptionFilter implements ExceptionFilter {
 
       await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
       console.log('Error: ', JSON.stringify(errorObject, null, 2));
+
       await ctx
         .replyWithHTML(`<b>Хьюстон, у нас проблема. Проверь ошибку в логах</b>`)
         .then(({ message_id }) => {

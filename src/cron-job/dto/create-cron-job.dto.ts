@@ -11,9 +11,13 @@ export class CreateCronJobDto {
   lessonId: number;
 
   @IsNumber({}, { message: 'Time should be string' })
-  groupId: number;
+  telegramId: number;
 
   @IsOptional()
   @IsString({ message: 'message should be string' })
   message?: string;
+
+  @IsOptional()
+  @IsString({ message: 'message should be string' })
+  groupName?: string;
 }

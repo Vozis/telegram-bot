@@ -31,7 +31,7 @@ export class CronJobService implements OnModuleInit {
           time: dbJob.time,
           lessonId: dbJob.lessonId,
           message: dbJob.message,
-          groupId: dbJob.groupId,
+          telegramId: dbJob.groupId,
         }),
     );
 
@@ -67,7 +67,7 @@ export class CronJobService implements OnModuleInit {
         message: reminderText,
         group: {
           connect: {
-            id: createCronJobDto.cronJobInfo.groupId,
+            telegramId: createCronJobDto.cronJobInfo.telegramId,
           },
         },
       },
@@ -79,7 +79,7 @@ export class CronJobService implements OnModuleInit {
       time: newCronJob.time,
       lessonId: newCronJob.lessonId,
       message: reminderText,
-      groupId: createCronJobDto.lesson.group.id,
+      telegramId: createCronJobDto.cronJobInfo.telegramId,
     });
 
     return newCronJob;
@@ -89,8 +89,8 @@ export class CronJobService implements OnModuleInit {
     const job = new CronJob(
       data.time,
       () => {
-        console.log(`Создано уведомление `);
-        this.bot.telegram.sendMessage(data.groupId, data.message);
+        console.log(`Уведомление сработало "${data.message}!"`);
+        this.bot.telegram.sendMessage(data.telegramId, data.message);
       },
       null,
       true,

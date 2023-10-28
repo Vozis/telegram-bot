@@ -36,12 +36,19 @@ export class GroupService {
   }
 
   async getByTelegramId(id: number): Promise<GroupSelect> {
-    return this.prismaService.group.findUnique({
+    const _group = await this.prismaService.group.findUnique({
       where: {
         telegramId: id,
       },
       select: groupSelectObj,
     });
+
+    if (!_group)
+      throw new BadRequestException(
+        `Эта группа еще не добавлена в списки администраторов`,
+      );
+
+    return _group;
   }
 
   async update(

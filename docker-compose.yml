@@ -8,6 +8,8 @@ services:
       context: .
     env_file:
       - .env
+#    environment:
+#      POSTGRES_HOST: 46.19.64.203
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules

@@ -20,7 +20,7 @@ RUN npm run prisma:generate
 
 RUN npm run build
 
-ENV NODE_ENV production
+#ENV NODE_ENV production
 
 RUN npm ci --omit=dev && npm cache clean --force
 
@@ -33,6 +33,8 @@ USER node
 FROM node:18-alpine As production
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/package.json .
+COPY --chown=node:node --from=build /usr/src/app/prisma ./prisma
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 CMD ["npm", "run", "start:prod"]

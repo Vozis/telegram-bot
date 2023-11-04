@@ -106,6 +106,11 @@ export class BotUpdate implements OnModuleDestroy {
     await ctx.scene.enter('getLessonsScene');
   }
 
+  @Action('createGroup')
+  async createGroupScene(@Ctx() ctx: SceneContextInterface) {
+    await ctx.scene.enter('createGroupScene');
+  }
+
   // Actions =================================================================
 
   @UseGuards(AdminGuard)
@@ -165,35 +170,36 @@ export class BotUpdate implements OnModuleDestroy {
   @UseGuards(AdminGuard)
   @Action('getCronJobs')
   async getCronJobs(@Ctx() ctx: ContextInterface) {
-    const jobs = await this.cronJobService.getCronJobsForGroup();
+    const jobs = await this.cronJobService.getCronJobs();
 
     return jobs;
   }
 
-  @Action('createGroup')
-  async createGroup(@Ctx() ctx: ContextInterface) {
-    try {
-      const groupInfo = await this.bot.telegram.getChat(ctx.chat.id);
-      const newGroup = await this.groupService.create({
-        name: groupInfo['title'],
-        telegramId: groupInfo.id,
-      });
-      await ctx.deleteMessage(ctx.message.message_id);
-      await ctx
-        .reply(`Создана группа ${newGroup.name}`)
-        .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
-        });
-      return;
-    } catch (err) {
-      console.log(err.message);
-      // await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-      await ctx.replyWithHTML(err.message).then(({ message_id }) => {
-        setTimeout(() => ctx.deleteMessage(message_id), 3000);
-      });
-      return;
-    }
-  }
+  // @Action('createGroup')
+  // async createGroup(@Ctx() ctx: ContextInterface) {
+  //   try {
+  //     const groupInfo = await this.bot.telegram.getChat(ctx.chat.id);
+  //     const newGroup = await this.groupService.create({
+  //       name: groupInfo['title'],
+  //       telegramId: groupInfo.id,
+  //       level: groupInfo,
+  //     });
+  //     await ctx.deleteMessage(ctx.message.message_id);
+  //     await ctx
+  //       .reply(`Создана группа ${newGroup.name}`)
+  //       .then(({ message_id }) => {
+  //         setTimeout(() => ctx.deleteMessage(message_id), 3000);
+  //       });
+  //     return;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //     // await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
+  //     await ctx.replyWithHTML(err.message).then(({ message_id }) => {
+  //       setTimeout(() => ctx.deleteMessage(message_id), 3000);
+  //     });
+  //     return;
+  //   }
+  // }
   @UseFilters(TelegrafExceptionFilter)
   @Command('get_schedule')
   async getSchedule(@Ctx() ctx: ContextInterface) {

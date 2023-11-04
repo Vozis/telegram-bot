@@ -4,6 +4,7 @@ export const lessonSelectObj: Prisma.LessonSelect = {
   id: true,
   day: true,
   time: true,
+  name: true,
   duration: true,
   isEnable: true,
   groupId: true,

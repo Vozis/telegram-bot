@@ -146,6 +146,15 @@ export class UpdateLessonScene {
     },
   ) {
     try {
+      if (ctx.callbackQuery['data'] === 'no') {
+        await ctx.scene.reenter();
+        return;
+        // await ctx.wizard.selectStep(1);
+        // //@ts-ignore
+        // return ctx.wizard.steps[ctx.wizard.cursor](ctx);
+        // // return;
+      }
+
       const lessonInfo = ctx.wizard.state.lessonInfo;
       await ctx.scene.leave();
       await this.lessonService.remove(+lessonInfo.split('|')[1]);

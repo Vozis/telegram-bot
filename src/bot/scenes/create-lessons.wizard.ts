@@ -48,6 +48,21 @@ export class CreateLessonScene {
     try {
       ctx.wizard.state['groupInfo'] = ctx.callbackQuery['data'];
       await ctx.wizard.next();
+      return 'Отлично! Теперь введи название урока';
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  @On('text')
+  @WizardStep(3)
+  async onLessonNameCreate(
+    @Ctx() ctx: WizardContext,
+    @Message('text') msg: string,
+  ) {
+    try {
+      ctx.wizard.state['lessonName'] = msg;
+      await ctx.wizard.next();
       await ctx.reply('Отлично! Теперь выбери день недели', {
         reply_markup: {
           inline_keyboard: [
@@ -67,7 +82,7 @@ export class CreateLessonScene {
   }
 
   @On('callback_query')
-  @WizardStep(3)
+  @WizardStep(4)
   async onDayCreate(@Ctx() ctx: WizardContext) {
     try {
       ctx.wizard.state['day'] = ctx.callbackQuery['data'];
@@ -79,7 +94,7 @@ export class CreateLessonScene {
   }
 
   @On('text')
-  @WizardStep(4)
+  @WizardStep(5)
   async onHourCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
       if (!+msg) return 'Это не число. Попробуй еще раз';
@@ -94,7 +109,7 @@ export class CreateLessonScene {
   }
 
   @On('text')
-  @WizardStep(5)
+  @WizardStep(6)
   async onMinutesCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
       // const regexp = /^0?(1[89]|[2-9]\d)$/
@@ -137,7 +152,7 @@ export class CreateLessonScene {
   // }
 
   @On('text')
-  @WizardStep(6)
+  @WizardStep(7)
   async onLessonCreateFinish(
     @Message('text') msg: any,
     @Ctx()
@@ -150,6 +165,7 @@ export class CreateLessonScene {
           isEnable: boolean;
           duration: number;
           groupInfo: string;
+          lessonName: string;
         };
       };
     },
@@ -163,6 +179,7 @@ export class CreateLessonScene {
       await this.lessonService.create({
         day: ctx.wizard.state.day,
         time: +ctx.wizard.state.hour * 60 + +ctx.wizard.state.minutes,
+        name: ctx.wizard.state.lessonName,
         isEnable: true,
         duration: !!ctx.wizard.state.duration ? +ctx.wizard.state.duration : 90,
         groupId: +ctx.wizard.state.groupInfo.split('|')[1],

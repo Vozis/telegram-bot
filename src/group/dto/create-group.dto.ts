@@ -12,6 +12,5 @@ export class CreateGroupDto {
 
   @IsString({ message: 'Неправильный уровень' })
   @IsEnum(LevelEnum)
-  @IsOptional()
   level?: LevelEnum;
 }

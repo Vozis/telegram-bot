@@ -53,7 +53,9 @@ export class CronJobService implements OnModuleInit {
       lessonTimeStart.minutes === 0 ? '00' : lessonTimeStart.minutes
     } до ${lessonTimeEnd.hours}:${
       lessonTimeEnd.minutes === 0 ? '00' : lessonTimeEnd.minutes
-    } пройдёт занятие по направлению “Этичный хакинг на Python. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
+    } пройдёт занятие по направлению “${
+      createCronJobDto.lesson.name.split('.')[0]
+    }. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
 
     const newCronJob = await this.prismaService.cronJob.create({
       data: {
@@ -99,10 +101,10 @@ export class CronJobService implements OnModuleInit {
     this.schedulerRegistry.addCronJob(data.name, job);
     job.start();
 
-    console.log('Добавлена задача с уведомлением');
+    console.log(`Добавлена задача с уведомлением ${data.name}`);
   }
 
-  async getCronJobsForGroup() {
+  async getCronJobs() {
     const jobs = await this.schedulerRegistry.getCronJobs();
 
     jobs.forEach((value, key, map) => {
@@ -110,14 +112,28 @@ export class CronJobService implements OnModuleInit {
     });
   }
 
+  async getCronJobsForLesson(lessonId: number) {
+    const lessonsFromDb = await this.prismaService.cronJob.findMany({
+      where: {
+        lesson: {
+          id: lessonId,
+        },
+      },
+    });
+
+    return lessonsFromDb;
+  }
+
   async deleteCronJob(jobName: string) {
     await this.schedulerRegistry.deleteCronJob(jobName);
 
-    return this.prismaService.cronJob.delete({
-      where: {
-        name: jobName,
-      },
-    });
+    return console.log(`Удалена задача с уведомлением ${jobName}`);
+
+    // return this.prismaService.cronJob.delete({
+    //   where: {
+    //     name: jobName,
+    //   },
+    // });
   }
 
   async deleteByLesson(lessonId: number) {
@@ -127,9 +143,4 @@ export class CronJobService implements OnModuleInit {
       },
     });
   }
-
-  // createScheduleTask(data: any) {
-  //   console.log(data);
-  //   await this.bot.telegram.sendMessage('createScheduleTask'))
-  // }
 }

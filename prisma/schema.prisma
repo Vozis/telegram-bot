@@ -48,6 +48,7 @@ model Lesson {
   id   Int    @id @default(autoincrement())
   day  String
   time Int    @default(720)
+  name String @default("Новый урок") @db.VarChar(1000)
 
   isEnable Boolean @default(true) @map("is_enable")
   duration Int     @default(90)
@@ -83,6 +84,7 @@ model CronJob {
 }
 
 enum LevelEnum {
+  START
   BASE
   INTERMEDIATE
   ADVANCED

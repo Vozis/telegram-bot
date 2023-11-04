@@ -30,6 +30,7 @@ export class LessonService {
       data: {
         day: createLessonDto.day,
         time: createLessonDto.time,
+        name: createLessonDto.name,
         isEnable: createLessonDto.isEnable,
         duration: createLessonDto.duration,
         group: {
@@ -68,6 +69,7 @@ export class LessonService {
       data: {
         day: updateLessonDto.day,
         time: updateLessonDto.time,
+        name: updateLessonDto.name,
       },
       select: lessonSelectObj,
     });
@@ -81,12 +83,21 @@ export class LessonService {
     return updatedLesson;
   }
 
-  remove(id: number) {
-    return this.prismaService.lesson.delete({
+  async remove(id: number) {
+    const lessonCronJobs = await this.cronJobService.getCronJobsForLesson(id);
+
+    lessonCronJobs.forEach(async item => {
+      await this.cronJobService.deleteCronJob(item.name);
+      console.log(`Удалено уведомление ${item.name}`);
+    });
+
+    const lesson = await this.prismaService.lesson.delete({
       where: {
         id,
       },
     });
+
+    return lesson;
   }
 
   private async createCronJobs(lesson: LessonSelect) {

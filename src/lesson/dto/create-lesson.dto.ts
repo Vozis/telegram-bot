@@ -15,6 +15,11 @@ export class CreateLessonDto {
   @IsNumber({}, { message: 'Час должен быть числом' })
   time: number;
 
+  @IsString({
+    message: 'Название должно быть строкой',
+  })
+  name: string;
+
   @IsBoolean()
   isEnable: boolean;
 

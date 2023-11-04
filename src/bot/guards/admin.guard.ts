@@ -31,7 +31,7 @@ export class AdminGuard implements CanActivate {
 
     const chatMember = await this.bot.telegram.getChatMember(chat.id, from.id);
 
-    console.log('chatMember:', chatMember);
+    // console.log('chatMember:', chatMember);
 
     // const isAdmin = !!admins.find(user => user.user.id === chatMember.user.id);
 
@@ -39,7 +39,7 @@ export class AdminGuard implements CanActivate {
       chatMember.status === 'administrator' ||
       chatMember.status === 'creator' ||
       update['message'].author_signature === 'админ';
-    console.log('isAdmin: ', isAdmin);
+    // console.log('isAdmin: ', isAdmin);
     if (!isAdmin) {
       throw new TelegrafException('Вы не администратор 😡');
     }

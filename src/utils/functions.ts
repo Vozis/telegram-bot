@@ -20,6 +20,8 @@ export const changeDayForCronJobs = (day: string) => {
 
 export const changeGroupLevel = (level: LevelEnum) => {
   switch (level) {
+    case LevelEnum.START:
+      return 'Начальный';
     case LevelEnum.BASE:
       return 'Базовый';
     case LevelEnum.INTERMEDIATE:

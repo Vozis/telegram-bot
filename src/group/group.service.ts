@@ -24,6 +24,7 @@ export class GroupService {
       data: {
         name: createGroupsDto.name,
         telegramId: createGroupsDto.telegramId,
+        level: createGroupsDto.level,
       },
       select: groupSelectObj,
     });
@@ -49,6 +50,16 @@ export class GroupService {
       );
 
     return _group;
+  }
+
+  async getGroupWhenCreate(telegramId: number): Promise<boolean> {
+    const _group = await this.prismaService.group.findUnique({
+      where: {
+        telegramId,
+      },
+    });
+
+    return !!_group;
   }
 
   async update(

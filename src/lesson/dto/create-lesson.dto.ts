@@ -1,10 +1,4 @@
-import {
-  IsBoolean,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateLessonDto {
   @IsString({
@@ -12,8 +6,8 @@ export class CreateLessonDto {
   })
   day: string;
 
-  @IsNumber({}, { message: 'Час должен быть числом' })
-  time: number;
+  @IsString({ message: 'time must be a string' })
+  time: string;
 
   @IsString({
     message: 'Название должно быть строкой',

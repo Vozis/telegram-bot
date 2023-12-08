@@ -1,25 +1,19 @@
-import { AppService } from '../app.service';
 import {
   Action,
   Command,
   Ctx,
-  Hears,
   Help,
   InjectBot,
-  Message,
-  On,
   Sender,
   Start,
   Update,
 } from 'nestjs-telegraf';
-import { Context, Markup, Telegraf } from 'telegraf';
-import { actionButtons } from './bot.buttons';
+import { Telegraf } from 'telegraf';
 import {
   ContextInterface,
   SceneContextInterface,
 } from './types/context.interface';
 import { UserService } from '../user/user.service';
-import { adminOptions, userOptions } from './options';
 import { GroupService } from '../group/group.service';
 import { OnModuleDestroy, UseFilters, UseGuards } from '@nestjs/common';
 
@@ -28,8 +22,9 @@ import { AdminGuard } from './guards/admin.guard';
 
 import { LessonService } from '../lesson/lesson.service';
 import { CronJobService } from '../cron-job/cron-job.service';
-import { toHoursAndMinutes } from '../utils/functions';
-import { message } from 'telegraf/filters';
+import { getTimeObject } from '../utils/functions';
+import { TaskService } from '../task/task.service';
+import { Actions, BotButtons, BotScenes } from '../utils/constants';
 
 @Update()
 export class BotUpdate implements OnModuleDestroy {
@@ -40,17 +35,22 @@ export class BotUpdate implements OnModuleDestroy {
     private readonly groupService: GroupService,
     private readonly lessonService: LessonService,
     private readonly cronJobService: CronJobService,
+    private readonly taskService: TaskService,
   ) {}
 
   @Start()
-  async onStart(@Ctx() ctx: ContextInterface, @Sender() sender: any) {
+  async showStartButton(@Ctx() ctx: ContextInterface, @Sender() sender: any) {
     try {
       await this.bot.telegram.setMyCommands([
-        { command: '/start', description: 'Начало работы' },
-        { command: '/admin', description: 'Функции администратора' },
+        { command: BotButtons.START, description: 'Начало работы' },
+        { command: BotButtons.ADMIN, description: 'Функции администратора' },
         {
-          command: '/get_schedule',
+          command: BotButtons.GET_SCHEDULE,
           description: 'Получить расписание',
+        },
+        {
+          command: BotButtons.GET_QUESTION,
+          description: 'Получить задачу дня',
         },
       ]);
       await ctx.deleteMessage(ctx.message.message_id);
@@ -65,7 +65,6 @@ export class BotUpdate implements OnModuleDestroy {
           setTimeout(() => ctx.deleteMessage(message_id), 3000);
         });
       return;
-      // await ctx.reply('Приветствую в нашей группе!)');
     } catch (err) {
       console.log(err.message);
       await ctx
@@ -88,27 +87,66 @@ export class BotUpdate implements OnModuleDestroy {
     return;
   }
 
-  // Lessons logic =================================================================
+  // Buttons logic =================================================================
 
-  @Action('createGroupSchedule')
+  // Создание урока
+  @Action(Actions.CreateGroupSchedule)
   async createLessonScene(@Ctx() ctx: SceneContextInterface) {
-    await ctx.scene.enter('createLessonScene');
+    await ctx.scene.enter(BotScenes.CreateLessonScene);
   }
 
-  @Action('updateSchedule')
-  async updateLessonScene(@Ctx() ctx: SceneContextInterface) {
-    await ctx.scene.enter('updateLessonScene');
+  // Создание урока
+  @Action(Actions.DeleteLessonFromSchedule)
+  async deleteLessonScene(@Ctx() ctx: SceneContextInterface) {
+    await ctx.scene.enter(BotScenes.DeleteLessonScene);
   }
 
   @UseGuards(AdminGuard)
-  @Action('getScheduleAdmin')
-  async getScheduleAdmin(@Ctx() ctx: SceneContextInterface) {
-    await ctx.scene.enter('getLessonsScene');
+  @Action(Actions.GetScheduleAdmin)
+  async getScheduleAdminScene(@Ctx() ctx: SceneContextInterface) {
+    await ctx.scene.enter(BotScenes.GetLessonsScene);
   }
 
-  @Action('createGroup')
+  @Action(Actions.CreateGroup)
   async createGroupScene(@Ctx() ctx: SceneContextInterface) {
-    await ctx.scene.enter('createGroupScene');
+    await ctx.scene.enter(BotScenes.CreateGroupScene);
+  }
+
+  @Action(Actions.UpdateTasks)
+  async updateTasksScene(@Ctx() ctx: ContextInterface) {
+    try {
+      return await this.taskService.getTasksFromGoogleSheet();
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  @Action(Actions.SyncSchedule)
+  async syncSchedule(@Ctx() ctx: ContextInterface) {
+    try {
+      let startMessage = null;
+      await ctx
+        .reply('Получение расписания...', {
+          disable_notification: true,
+        })
+        .then(({ message_id }) => {
+          startMessage = message_id;
+        });
+      const res = await this.lessonService.getFromGoogleSheet();
+      await ctx
+        .reply(res, {
+          disable_notification: true,
+        })
+        .then(({ message_id }) => {
+          ctx.deleteMessage(startMessage);
+          setTimeout(() => {
+            ctx.deleteMessage(message_id);
+          }, 3000);
+        });
+      return;
+    } catch (err) {
+      console.log(err.message);
+    }
   }
 
   // Actions =================================================================
@@ -116,39 +154,50 @@ export class BotUpdate implements OnModuleDestroy {
   @UseGuards(AdminGuard)
   @UseFilters(TelegrafExceptionFilter)
   @Command('admin')
-  async showAdmin(@Ctx() ctx: ContextInterface) {
+  async showAdminCommandsButton(@Ctx() ctx: ContextInterface) {
     try {
-      // console.log(await ctx.getChatMember(ctx.message.from.id));
-      // console.log('ctx: ', ctx.message.from);
-      // const isAdmin = await this.isAdmin(ctx.chat.id, ctx.from.id, ctx);
-
-      // console.log('isAdmin: ', isAdmin);
-
       await ctx.deleteMessage(ctx.message.message_id);
       await ctx
         .reply('Что ты хочешь сделать?', {
           disable_notification: true,
           reply_markup: {
             inline_keyboard: [
-              [{ text: 'Добавить группу в БД', callback_data: 'createGroup' }],
+              [
+                {
+                  text: 'Добавить группу в БД',
+                  callback_data: Actions.CreateGroup,
+                },
+              ],
               [
                 {
                   text: 'Добавить расписание группы',
-                  callback_data: 'createGroupSchedule',
+                  callback_data: Actions.CreateGroupSchedule,
+                },
+              ],
+              [
+                {
+                  text: 'Удалить урок из расписания',
+                  callback_data: Actions.DeleteLessonFromSchedule,
                 },
               ],
               [
                 {
                   text: 'Получить расписание для всех групп',
-                  callback_data: 'getScheduleAdmin',
+                  callback_data: Actions.GetScheduleAdmin,
                 },
               ],
               [
                 {
-                  text: 'Изменить расписание для группы',
-                  callback_data: 'updateSchedule',
+                  text: 'Обновить расписание',
+                  callback_data: Actions.SyncSchedule,
                 },
               ],
+              // [
+              //   {
+              //     text: 'Обновить задания в группах',
+              //     callback_data: Actions.UpdateTasks,
+              //   },
+              // ],
             ],
           },
         })
@@ -170,43 +219,67 @@ export class BotUpdate implements OnModuleDestroy {
   @UseGuards(AdminGuard)
   @Action('getCronJobs')
   async getCronJobs(@Ctx() ctx: ContextInterface) {
-    const jobs = await this.cronJobService.getCronJobs();
+    const jobs = await this.cronJobService.getCronJobsFromCronSchedule();
 
     return jobs;
   }
 
-  // @Action('createGroup')
-  // async createGroup(@Ctx() ctx: ContextInterface) {
-  //   try {
-  //     const groupInfo = await this.bot.telegram.getChat(ctx.chat.id);
-  //     const newGroup = await this.groupService.create({
-  //       name: groupInfo['title'],
-  //       telegramId: groupInfo.id,
-  //       level: groupInfo,
-  //     });
-  //     await ctx.deleteMessage(ctx.message.message_id);
-  //     await ctx
-  //       .reply(`Создана группа ${newGroup.name}`)
-  //       .then(({ message_id }) => {
-  //         setTimeout(() => ctx.deleteMessage(message_id), 3000);
-  //       });
-  //     return;
-  //   } catch (err) {
-  //     console.log(err.message);
-  //     // await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-  //     await ctx.replyWithHTML(err.message).then(({ message_id }) => {
-  //       setTimeout(() => ctx.deleteMessage(message_id), 3000);
-  //     });
-  //     return;
-  //   }
-  // }
+  @UseFilters(TelegrafExceptionFilter)
+  @Command('get_question')
+  async getTaskForDay(@Ctx() ctx: ContextInterface) {
+    try {
+      const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
+
+      const task = await this.taskService.getTaskForGroupToday(groupInfo.id);
+
+      if (!task.actions.length) {
+        await ctx.deleteMessage(ctx.message.message_id);
+        await ctx
+          .replyWithHTML(task.message, {
+            disable_notification: true,
+          })
+          .then(({ message_id }) => {
+            setTimeout(() => ctx.deleteMessage(message_id), 3000);
+          });
+        return;
+      } else {
+        await ctx.deleteMessage(ctx.message.message_id);
+        await ctx
+          .reply(task.message, {
+            disable_notification: true,
+            reply_markup: {
+              inline_keyboard: task.actions.map(action => {
+                return [
+                  {
+                    text: action,
+                    callback_data: action,
+                  },
+                ];
+              }),
+            },
+          })
+          .then(({ message_id }) => {
+            setTimeout(() => ctx.deleteMessage(message_id), 3000);
+          });
+        return;
+      }
+    } catch (err) {
+      console.log(err.message);
+      await ctx.deleteMessage(ctx.message.message_id);
+      await ctx.replyWithHTML(err.message).then(({ message_id }) => {
+        setTimeout(() => ctx.deleteMessage(message_id), 3000);
+      });
+      return;
+    }
+  }
   @UseFilters(TelegrafExceptionFilter)
   @Command('get_schedule')
-  async getSchedule(@Ctx() ctx: ContextInterface) {
+  async getScheduleButton(@Ctx() ctx: ContextInterface) {
     try {
       const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
 
       const lessons = await this.lessonService.getByGroupId(groupInfo.id);
+
       await ctx.deleteMessage(ctx.message.message_id);
       await ctx
         .replyWithHTML(
@@ -215,10 +288,10 @@ export class BotUpdate implements OnModuleDestroy {
       ${
         lessons.length > 0
           ? lessons.map(lesson => {
-              const lessonTime = toHoursAndMinutes(lesson.time);
-              return `<i> - ${lesson.day} ${lessonTime.hours}:${
+              const lessonTime = getTimeObject(lesson.time);
+              return `\n - ${lesson.day}, ${lessonTime.hours}:${
                 lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-              }</i> \n`;
+              }`;
             })
           : 'Пока занятий нет'
       }`,
@@ -236,6 +309,12 @@ export class BotUpdate implements OnModuleDestroy {
       });
       return;
     }
+  }
+
+  //  Private methods =================================================================
+
+  async onModuleDestroy() {
+    console.log('Конец работы');
   }
 
   // =================================================================
@@ -308,95 +387,6 @@ export class BotUpdate implements OnModuleDestroy {
   //   }
   // }
 
-  // @On('left_chat_member')
-  // async deleteUser(
-  //   @Ctx()
-  //   ctx: ContextInterface & {
-  //     message: {
-  //       left_chat_member: {
-  //         id: number;
-  //       };
-  //     };
-  //   },
-  // ) {
-  //   try {
-  //     const _user = await this.userService.getByTelegramId(
-  //       ctx.message.left_chat_member.id,
-  //     );
-  //
-  //     if (!_user) return;
-  //
-  //     const deletedUser = await this.userService.remove(
-  //       ctx.message.left_chat_member.id,
-  //     );
-  //
-  //     return;
-  //   } catch (err) {
-  //     console.log(err.message);
-  //   }
-  // }
-
-  // @Action('shareInfo')
-  // async shareInfo(@Sender() sender: any, @Ctx() ctx: ContextInterface) {
-  //   try {
-  //     const groupInfo = await this.groupService.getByTelegramId(ctx.chat.id);
-  //
-  //     const addUser: CreateUserDto = {
-  //       firstName: ctx.callbackQuery.from.first_name || 'empty',
-  //       lastName: ctx.callbackQuery.from.last_name || 'empty',
-  //       userName: ctx.callbackQuery.from.username || 'empty',
-  //       telegramId: ctx.callbackQuery.from.id,
-  //       isAdmin: true,
-  //       groupId: groupInfo.id,
-  //     };
-  //
-  //     const newUser = await this.userService.create({
-  //       firstName: addUser.firstName,
-  //       lastName: addUser.lastName,
-  //       userName: addUser.userName,
-  //       telegramId: addUser.telegramId,
-  //       isAdmin: addUser.isAdmin,
-  //       groupId: addUser.groupId,
-  //     });
-  //
-  //     await ctx.deleteMessage(ctx.callbackQuery.message.message_id);
-  //     return `В БД добавлен пользователь ${newUser.userName}`;
-  //   } catch (err) {
-  //     console.log(err.message);
-  //   }
-  // }
-
-  // =================================================================
-  // =================================================================
-
-  //  Private methods =================================================================
-
-  async onModuleDestroy() {
-    console.log('Конец работы');
-  }
-
-  // private async isAdmin(chatId: number, userId: number, ctx: ContextInterface) {
-  //   return new Promise((resolve, reject) => {
-  //     ctx.telegram
-  //       .getChatMember(chatId, userId)
-  //       .then(user => {
-  //         resolve(user.status === 'administrator' || user.status === 'creator');
-  //       })
-  //       .catch(error => reject(error));
-  //   });
-  // }
-
-  // private async isAdmin(chatId: number, userId: number, ctx: ContextInterface) {
-  //   return new Promise((resolve, reject) => {
-  //     ctx.telegram
-  //       .getChatMember(chatId, userId)
-  //       .then(user => {
-  //         resolve(user.status === 'administrator' || user.status === 'creator');
-  //       })
-  //       .catch(error => reject(error));
-  //   });
-  // }
-
   // @On('new_chat_members')
   // async addUser(
   //   @Ctx()
@@ -443,6 +433,34 @@ export class BotUpdate implements OnModuleDestroy {
   //
   //     await ctx.reply(
   //       `Данный пользователь "${newUser.userName}" добавлен в БД.`,
+  //     );
+  //
+  //     return;
+  //   } catch (err) {
+  //     console.log(err.message);
+  //   }
+  // }
+
+  // @On('left_chat_member')
+  // async deleteUser(
+  //   @Ctx()
+  //   ctx: ContextInterface & {
+  //     message: {
+  //       left_chat_member: {
+  //         id: number;
+  //       };
+  //     };
+  //   },
+  // ) {
+  //   try {
+  //     const _user = await this.userService.getByTelegramId(
+  //       ctx.message.left_chat_member.id,
+  //     );
+  //
+  //     if (!_user) return;
+  //
+  //     const deletedUser = await this.userService.remove(
+  //       ctx.message.left_chat_member.id,
   //     );
   //
   //     return;

@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsString } from 'class-validator';
 import { LevelEnum } from '@prisma/client';
 
 export class CreateGroupDto {

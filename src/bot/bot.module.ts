@@ -6,18 +6,27 @@ import { GroupModule } from '../group/group.module';
 import { CreateLessonScene } from './scenes/create-lessons.wizard';
 import { LessonModule } from '../lesson/lesson.module';
 import { CronJobModule } from '../cron-job/cron-job.module';
-import { UpdateLessonScene } from './scenes/update-lessons.wizard';
+import { DeleteLessonScene } from './scenes/delete-lessons.wizard';
 import { GetLessonsScene } from './scenes/get-lessons.wizard';
 import { CreateGroupScene } from './scenes/create-group.wizard';
+import { TaskModule } from '../task/task.module';
+import { SheetModule } from '../sheet/sheet.module';
 
 @Module({
   providers: [
     BotUpdate,
     CreateLessonScene,
-    UpdateLessonScene,
+    DeleteLessonScene,
     GetLessonsScene,
     CreateGroupScene,
   ],
-  imports: [UserModule, GroupModule, LessonModule, CronJobModule],
+  imports: [
+    UserModule,
+    GroupModule,
+    LessonModule,
+    CronJobModule,
+    TaskModule,
+    SheetModule,
+  ],
 })
 export class BotModule {}

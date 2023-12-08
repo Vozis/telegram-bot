@@ -4,6 +4,7 @@ export const groupSelectObj: Prisma.GroupSelect = {
   id: true,
   telegramId: true,
   name: true,
+  slug: true,
   level: true,
 };
 

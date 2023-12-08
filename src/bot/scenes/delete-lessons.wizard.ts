@@ -4,10 +4,11 @@ import { LessonService } from '../../lesson/lesson.service';
 import { Markup } from 'telegraf';
 
 import { GroupService } from '../../group/group.service';
-import { toHoursAndMinutes } from '../../utils/functions';
+import { getTimeObject } from '../../utils/functions';
+import { BotScenes } from '../../utils/constants';
 
-@Wizard('updateLessonScene')
-export class UpdateLessonScene {
+@Wizard(BotScenes.DeleteLessonScene)
+export class DeleteLessonScene {
   constructor(
     private readonly lessonService: LessonService,
     private readonly groupService: GroupService,
@@ -15,7 +16,7 @@ export class UpdateLessonScene {
   @WizardStep(1)
   async onGroupChoose(@Ctx() ctx: WizardContext) {
     try {
-      const groupsDb = await this.groupService.getAll();
+      const groupsDb = await this.groupService.getAllGroups();
 
       if (!groupsDb.length) {
         await ctx.scene.leave();
@@ -69,16 +70,15 @@ export class UpdateLessonScene {
         .reply(
           'Отлично! Выбери нужный урок:',
           Markup.inlineKeyboard(
-            lessons.map(item => {
-              const lessonTime = toHoursAndMinutes(item.time);
-
+            lessons.map(lesson => {
+              const lessonTime = getTimeObject(lesson.time);
               return Markup.button.callback(
-                `${item.day},${lessonTime.hours}:${
+                `${lesson.day}, ${lessonTime.hours}:${
                   lessonTime.minutes === 0 ? '00' : lessonTime.minutes
                 }`,
-                `${item.day},${lessonTime.hours}:${
+                `${lesson.day}, ${lessonTime.hours}:${
                   lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-                }|${item.id}`,
+                }|${lesson.id}`,
               );
             }),
             {
@@ -157,7 +157,7 @@ export class UpdateLessonScene {
 
       const lessonInfo = ctx.wizard.state.lessonInfo;
       await ctx.scene.leave();
-      await this.lessonService.remove(+lessonInfo.split('|')[1]);
+      await this.lessonService.removeLesson(+lessonInfo.split('|')[1]);
       await ctx
         .reply(`Удален урок "${lessonInfo.split('|')[0]}"`)
         .then(({ message_id }) => {

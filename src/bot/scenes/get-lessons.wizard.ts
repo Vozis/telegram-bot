@@ -11,9 +11,10 @@ import { LessonService } from '../../lesson/lesson.service';
 import { GroupService } from '../../group/group.service';
 import { WizardContext } from 'telegraf/typings/scenes';
 import { Markup } from 'telegraf';
-import { toHoursAndMinutes } from '../../utils/functions';
+import { getTimeObject, toHoursAndMinutes } from '../../utils/functions';
+import { BotScenes } from '../../utils/constants';
 
-@Wizard('getLessonsScene')
+@Wizard(BotScenes.GetLessonsScene)
 export class GetLessonsScene {
   constructor(
     private readonly lessonService: LessonService,
@@ -23,7 +24,7 @@ export class GetLessonsScene {
   @WizardStep(1)
   async onGroupChoose(@Ctx() ctx: WizardContext) {
     try {
-      const groupsDb = await this.groupService.getAll();
+      const groupsDb = await this.groupService.getAllGroups();
 
       if (!groupsDb.length) {
         await ctx.scene.leave();
@@ -76,10 +77,10 @@ export class GetLessonsScene {
       ${
         lessons.length > 0
           ? lessons.map(lesson => {
-              const lessonTime = toHoursAndMinutes(lesson.time);
-              return `<i> - ${lesson.day} ${lessonTime.hours}:${
+              const lessonTime = getTimeObject(lesson.time);
+              return `\n - ${lesson.day}, ${lessonTime.hours}:${
                 lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-              }</i> \n`;
+              }`;
             })
           : 'Пока занятий нет'
       }`,

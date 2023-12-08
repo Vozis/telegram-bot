@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { CronJobType } from '@prisma/client';
 
 export class CreateCronJobDto {
   @IsString({ message: 'Name should be string' })
@@ -7,17 +14,25 @@ export class CreateCronJobDto {
   @IsString({ message: 'Time should be string' })
   time: string;
 
-  @IsNumber({}, { message: 'Time should be string' })
-  lessonId: number;
+  @IsOptional()
+  @IsNumber({}, { message: 'LessonId should be string' })
+  lessonId?: number;
 
-  @IsNumber({}, { message: 'Time should be string' })
+  @IsNumber({}, { message: 'TelegramId should be string' })
   telegramId: number;
 
   @IsOptional()
-  @IsString({ message: 'message should be string' })
+  @IsString({ message: 'Message should be string' })
   message?: string;
 
   @IsOptional()
-  @IsString({ message: 'message should be string' })
+  @IsString({ message: 'GroupName should be string' })
   groupName?: string;
+
+  @IsString({})
+  @IsEnum(CronJobType)
+  type: CronJobType;
+
+  @IsArray()
+  actions: string[];
 }

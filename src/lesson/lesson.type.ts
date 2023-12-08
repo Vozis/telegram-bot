@@ -21,3 +21,18 @@ export const lessonSelectObj: Prisma.LessonSelect = {
 export type LessonSelect = Prisma.LessonGetPayload<{
   select: typeof lessonSelectObj;
 }>;
+
+export interface LessonObj {
+  name: string;
+  time: string;
+  duration: number;
+}
+
+export type LessonScheduleObject = Record<string, LessonObj[]>;
+
+type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
+
+export const getEntries = <T extends object>(obj: T) =>
+  Object.entries(obj) as Entries<T>;

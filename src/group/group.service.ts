@@ -4,12 +4,17 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupsDto } from './dto/update-group.dto';
 import { Group } from '@prisma/client';
 import { GroupSelect, groupSelectObj } from './groupSelectObj';
+import slugify from 'slugify';
+import { SheetService } from '../sheet/sheet.service';
 
 @Injectable()
 export class GroupService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly sheetService: SheetService,
+  ) {}
 
-  async create(createGroupsDto: CreateGroupDto): Promise<GroupSelect> {
+  async createGroup(createGroupsDto: CreateGroupDto): Promise<GroupSelect> {
     const _group = await this.prismaService.group.findUnique({
       where: {
         telegramId: createGroupsDto.telegramId,
@@ -20,9 +25,15 @@ export class GroupService {
     if (_group)
       throw new BadRequestException(`Группа "${_group.name}" уже создана.`);
 
+    const shortName = slugify(createGroupsDto.name, {
+      locale: 'en',
+      lower: true,
+    });
+
     return this.prismaService.group.create({
       data: {
         name: createGroupsDto.name,
+        slug: shortName,
         telegramId: createGroupsDto.telegramId,
         level: createGroupsDto.level,
       },
@@ -30,10 +41,29 @@ export class GroupService {
     });
   }
 
-  async getAll(): Promise<GroupSelect[]> {
+  async getAllGroups(): Promise<GroupSelect[]> {
     return this.prismaService.group.findMany({
       select: groupSelectObj,
     });
+  }
+
+  async getBySlug(slug: string): Promise<GroupSelect> {
+    const _group = await this.prismaService.group.findFirst({
+      where: {
+        slug: {
+          contains: slug,
+          mode: 'insensitive',
+        },
+      },
+      select: groupSelectObj,
+    });
+
+    if (!_group)
+      throw new BadRequestException(
+        `Эта группа еще не добавлена в списки администраторов`,
+      );
+
+    return _group;
   }
 
   async getByTelegramId(id: number): Promise<GroupSelect> {
@@ -62,20 +92,26 @@ export class GroupService {
     return !!_group;
   }
 
-  async update(
+  async updateGroup(
     id: number,
     updateGroupsDto: UpdateGroupsDto,
   ): Promise<GroupSelect> {
-    // console.log(updateGroupsDto);
+    const shortName = slugify(updateGroupsDto.name, {
+      locale: 'en',
+      lower: true,
+    });
 
     return this.prismaService.group.update({
       where: { id },
-      data: updateGroupsDto,
+      data: {
+        ...updateGroupsDto,
+        slug: shortName,
+      },
       select: groupSelectObj,
     });
   }
 
-  async remove(id: number): Promise<Group> {
+  async removeGroup(id: number): Promise<Group> {
     return this.prismaService.group.delete({
       where: { id },
     });

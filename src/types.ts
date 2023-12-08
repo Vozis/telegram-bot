@@ -5,4 +5,5 @@ export enum DayEnum {
   THURSDAY = 'четверг',
   FRIDAY = 'пятница',
   SATURDAY = 'суббота',
+  SUNDAY = 'воскресенье',
 }

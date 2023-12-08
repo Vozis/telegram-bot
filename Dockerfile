@@ -37,5 +37,10 @@ COPY --chown=node:node --from=build /usr/src/app/package.json .
 COPY --chown=node:node --from=build /usr/src/app/prisma ./prisma
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
+#ENV POSTGRES_HOST postgres
+#ENV POSTGRES_PORT 5432
+
+#RUN npm run prisma:migrate
+
 CMD ["npm", "run", "start:prod"]
 #CMD ["node", "dist/main.js"]

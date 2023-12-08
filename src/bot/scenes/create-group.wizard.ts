@@ -15,8 +15,9 @@ import { ContextInterface } from '../types/context.interface';
 import { LevelEnum } from '@prisma/client';
 import { changeGroupLevel } from '../../utils/functions';
 import { BadRequestException } from '@nestjs/common';
+import { BotScenes } from '../../utils/constants';
 
-@Wizard('createGroupScene')
+@Wizard(BotScenes.CreateGroupScene)
 export class CreateGroupScene {
   constructor(
     private readonly lessonService: LessonService,
@@ -35,8 +36,6 @@ export class CreateGroupScene {
       const isGroupExist = await this.groupService.getGroupWhenCreate(
         groupInfo.id,
       );
-
-      console.log('isGroupExist: ', isGroupExist);
 
       if (isGroupExist) {
         await ctx.scene.leave();
@@ -93,9 +92,6 @@ export class CreateGroupScene {
   async onGroupLevelChoose(@Ctx() ctx: WizardContext) {
     try {
       ctx.wizard.state['groupLevel'] = ctx.callbackQuery['data'];
-
-      console.log(ctx.wizard.state['groupLevel']);
-
       await ctx.wizard.next();
       await ctx
         .reply(
@@ -141,7 +137,7 @@ export class CreateGroupScene {
         return;
       }
 
-      const newGroup = await this.groupService.create({
+      const newGroup = await this.groupService.createGroup({
         name: ctx.wizard.state.groupName,
         telegramId: +ctx.wizard.state.groupTelegramId,
         level: ctx.wizard.state.groupLevel,

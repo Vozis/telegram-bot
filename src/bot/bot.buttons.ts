@@ -21,6 +21,12 @@ export function actionButtons() {
         callback_data: 'updateSchedule',
       },
     ],
+    [
+      {
+        text: 'Обновить задания в группах',
+        callback_data: 'updateTasks',
+      },
+    ],
     // [
     //   {
     //     text: 'Получить все установленные уведомления',

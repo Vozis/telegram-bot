@@ -5,6 +5,7 @@ export const cronJobSelectObj: Prisma.CronJobSelect = {
   name: true,
   time: true,
   message: true,
+  actions: true,
   groupId: true,
   lessonId: true,
   group: {

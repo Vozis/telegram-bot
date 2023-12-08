@@ -43,4 +43,4 @@ COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 #RUN npm run prisma:migrate
 
 CMD ["npm", "run", "start:prod"]
-#CMD ["node", "dist/main.js"]
+#CMD ["node", "dist/src/main.js"]

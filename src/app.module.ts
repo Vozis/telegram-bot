@@ -12,7 +12,7 @@ import { BotModule } from './bot/bot.module';
 import { LessonModule } from './lesson/lesson.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronJobModule } from './cron-job/cron-job.module';
-import { GoogleSheetModule } from 'nest-google-sheet-connector';
+import { GoogleSheetModule } from 'nest-google-sheet-connector-modify';
 import { TaskModule } from './task/task.module';
 import { SheetModule } from './sheet/sheet.module';
 

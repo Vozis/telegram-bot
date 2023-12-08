@@ -34,7 +34,7 @@
     "cron-time-generator": "^2.0.1",
     "googleapis": "^129.0.0",
     "moment": "^2.29.4",
-    "nest-google-sheet-connector": "github:johnkhansrc/NestGoogleSheetConnector",
+    "nest-google-sheet-connector-modify": "^1.0.1",
     "nestjs-telegraf": "^2.7.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",

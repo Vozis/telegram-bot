@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { GoogleSheetConnectorService } from 'nest-google-sheet-connector';
+import { GoogleSheetConnectorService } from 'nest-google-sheet-connector-modify';
 import { ConfigService } from '@nestjs/config';
 import { sheetTitlesRange } from '../utils/constants';
 import { getDayRowsIndexes } from '../utils/functions';

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { GoogleSheetConnectorService } from 'nest-google-sheet-connector';
+import { GoogleSheetConnectorService } from 'nest-google-sheet-connector-modify';
 import { ConfigService } from '@nestjs/config';
 import { CronJobService } from '../cron-job/cron-job.service';
 import { CreateTaskCronJobForDb } from '../cron-job/cron-job.type';

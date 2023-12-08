@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { SheetService } from './sheet.service';
 import { SheetController } from './sheet.controller';
 import * as credentials from '../../service_account.json';
-import { GoogleSheetModule } from 'nest-google-sheet-connector';
+import { GoogleSheetModule } from 'nest-google-sheet-connector-modify';
 
 @Module({
   imports: [GoogleSheetModule.register(credentials)],

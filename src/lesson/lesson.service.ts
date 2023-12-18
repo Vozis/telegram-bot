@@ -6,6 +6,8 @@ import { CronJobType } from '@prisma/client';
 import {
   changeDayForCronJobs,
   getDayByNumber,
+  getLessonType,
+  getLessonTypeRevert,
   getTimeObject,
 } from '../utils/functions';
 import { CronJobService } from '../cron-job/cron-job.service';
@@ -47,8 +49,10 @@ export class LessonService {
         day: createLessonDto.day,
         time: createLessonDto.time,
         name: createLessonDto.name,
+        type: createLessonDto.type,
         isEnable: createLessonDto.isEnable,
-        duration: createLessonDto.duration,
+        duration:
+          createLessonDto.type === 'SEMINAR' ? createLessonDto.duration : null,
         group: {
           connect: {
             id: createLessonDto.groupId,
@@ -68,7 +72,8 @@ export class LessonService {
       {
         name: newLesson.name,
         time: newLesson.time,
-        duration: newLesson.duration,
+        duration: newLesson.duration ? newLesson.duration : '',
+        type: getLessonTypeRevert(newLesson.type),
       },
     );
 
@@ -89,6 +94,7 @@ export class LessonService {
     id: number,
     updateLessonDto: UpdateLessonDto,
   ): Promise<LessonSelect> {
+    console.log(updateLessonDto);
     const updatedLesson = await this.prismaService.lesson.update({
       where: {
         id,
@@ -97,12 +103,16 @@ export class LessonService {
         day: updateLessonDto.day,
         time: updateLessonDto.time,
         name: updateLessonDto.name,
+        type: updateLessonDto.type,
+        duration:
+          updateLessonDto.type === 'LECTURE' ? null : updateLessonDto.duration,
       },
       select: lessonSelectObj,
     });
 
     const lessonCronJobs =
       await this.cronJobService.getCronJobsForLessonFromDb(id);
+
     lessonCronJobs.forEach(async item => {
       await this.cronJobService.deleteCronJobFromCronSchedule(item.name);
       console.log(`Удалено уведомление ${item.name}`);
@@ -137,6 +147,7 @@ export class LessonService {
       name: '',
       time: '',
       duration: '',
+      type: '',
     });
 
     return lesson;
@@ -148,25 +159,27 @@ export class LessonService {
 
     const data: string[][] = await this.sheetService.readRangeFromSheet(
       'Расписание',
-      `Расписание!${sheetTitlesRange[0]}1:${sheetTitlesRange[lastIndex - 1]}22`,
+      `Расписание!${sheetTitlesRange[0]}1:${sheetTitlesRange[lastIndex - 1]}29`,
     );
 
     const obj: LessonScheduleObject = {};
 
     for (let i = 0; i < data[0].length; i++) {
-      for (let j = 0; j < data.length - 3; j += 3) {
+      for (let j = 0; j < data.length - 4; j += 4) {
         if (!obj[data[0][i]]) {
           obj[data[0][i]] = [];
           obj[data[0][i]].push({
             name: data[j + 1][i],
             time: data[j + 2][i],
             duration: +data[j + 3][i],
+            type: data[j + 4][i],
           });
         } else {
           obj[data[0][i]].push({
             name: data[j + 1][i],
             time: data[j + 2][i],
             duration: +data[j + 3][i],
+            type: data[j + 4][i],
           });
         }
       }
@@ -225,33 +238,36 @@ export class LessonService {
       });
 
       if (_lesson) {
-        // console.log(
-        //   '_lesson: ',
-        //   JSON.stringify({
-        //     name: _lesson.name,
-        //     time: _lesson.time,
-        //     duration: _lesson.duration,
-        //   }),
-        // );
-        //
-        // console.log(
-        //   'lesson: ',
-        //   JSON.stringify({
-        //     name: lesson.name,
-        //     time: lesson.time,
-        //     duration: lesson.duration,
-        //   }),
-        // );
         if (
           _lesson.name != lesson.name ||
           _lesson.duration != lesson.duration ||
-          _lesson.time != lesson.time
+          _lesson.time != lesson.time ||
+          _lesson.type != getLessonType(lesson.type)
         ) {
-          // console.log('update lesson');
+          console.log(
+            '_lesson: ',
+            JSON.stringify({
+              name: _lesson.name,
+              time: _lesson.time,
+              duration: _lesson.duration,
+              type: _lesson.type,
+            }),
+          );
+
+          console.log(
+            'lesson: ',
+            JSON.stringify({
+              name: lesson.name,
+              time: lesson.time,
+              duration: lesson.duration,
+              type: getLessonType(lesson.type),
+            }),
+          );
           await this.updateLesson(_lesson.id, {
             time: lesson.time,
             name: lesson.name,
             duration: +lesson.duration,
+            type: getLessonType(lesson.type),
           });
         }
       } else {
@@ -259,6 +275,7 @@ export class LessonService {
           name: lesson.name,
           time: lesson.time,
           day: day,
+          type: getLessonType(lesson.type),
           duration: +lesson.duration,
           isEnable: true,
           groupId: _group.id,
@@ -280,46 +297,72 @@ export class LessonService {
     const dayNumber = changeDayForCronJobs(lesson.day);
     const lessonTime = getTimeObject(lesson.time);
 
-    const jobNameForDay = `${lesson.id}-${getDayByNumber(dayNumber - 1)}-${
-      lesson.time
-    }`;
-    const jobNameForTwoHours = `${lesson.id}-${lesson.day}-${
-      lessonTime.hours - 2
-    }:${lessonTime.minutes}`;
+    switch (lesson.type) {
+      case 'SEMINAR':
+        const jobNameForDay = `${lesson.id}-${getDayByNumber(dayNumber - 1)}-${
+          lesson.time
+        }`;
+        const jobNameForTwoHours = `${lesson.id}-${lesson.day}-${
+          lessonTime.hours - 2
+        }:${lessonTime.minutes}`;
 
-    const jobTimeForDay = `${lessonTime.minutes} ${lessonTime.hours} * * ${
-      dayNumber - 1
-    }`;
+        const jobTimeForDay = `${lessonTime.minutes} ${lessonTime.hours} * * ${
+          dayNumber - 1
+        }`;
 
-    const jobTimeForTwoHours = `${lessonTime.minutes} ${
-      lessonTime.hours - 2 < 0 ? lessonTime.hours + 22 : lessonTime.hours - 2
-    } * * ${dayNumber}`;
+        const jobTimeForTwoHours = `${lessonTime.minutes} ${
+          lessonTime.hours - 2 < 0
+            ? lessonTime.hours + 22
+            : lessonTime.hours - 2
+        } * * ${dayNumber}`;
 
-    await this.cronJobService.createLessonCronJob({
-      cronJobInfo: {
-        name: jobNameForDay,
-        time: jobTimeForDay,
-        lessonId: lesson.id,
-        telegramId: lesson.group.telegramId,
-        type: CronJobType.LESSON,
-        actions: [],
-      },
-      lesson: lesson,
-      type: 'day',
-    });
+        await this.cronJobService.createLessonCronJob({
+          cronJobInfo: {
+            name: jobNameForDay,
+            time: jobTimeForDay,
+            lessonId: lesson.id,
+            telegramId: lesson.group.telegramId,
+            type: CronJobType.LESSON,
+            actions: [],
+          },
+          lesson: lesson,
+          type: 'day',
+        });
 
-    await this.cronJobService.createLessonCronJob({
-      cronJobInfo: {
-        name: jobNameForTwoHours,
-        time: jobTimeForTwoHours,
-        lessonId: lesson.id,
-        telegramId: lesson.group.telegramId,
-        type: CronJobType.LESSON,
-        actions: [],
-      },
-      lesson: lesson,
-      type: 'hour',
-    });
+        await this.cronJobService.createLessonCronJob({
+          cronJobInfo: {
+            name: jobNameForTwoHours,
+            time: jobTimeForTwoHours,
+            lessonId: lesson.id,
+            telegramId: lesson.group.telegramId,
+            type: CronJobType.LESSON,
+            actions: [],
+          },
+          lesson: lesson,
+          type: 'hour',
+        });
+        break;
+      case 'LECTURE':
+        const jobNameForLecture = `${lesson.id}-${getDayByNumber(dayNumber)}-${
+          lesson.time
+        }`;
+
+        const jobTimeForLecture = `${lessonTime.minutes} ${lessonTime.hours} * * ${dayNumber}`;
+
+        await this.cronJobService.createLessonCronJob({
+          cronJobInfo: {
+            name: jobNameForLecture,
+            time: jobTimeForLecture,
+            lessonId: lesson.id,
+            telegramId: lesson.group.telegramId,
+            type: CronJobType.LESSON,
+            actions: [],
+          },
+          lesson: lesson,
+          type: 'hour',
+        });
+        break;
+    }
 
     return;
   }

@@ -1,5 +1,6 @@
 import { DayEnum } from '../types';
-import { LevelEnum } from '@prisma/client';
+import { LessonTypeEnum, LevelEnum } from '@prisma/client';
+import { startSheetRowIndex } from './constants';
 
 export const changeDayForCronJobs = (day: string) => {
   switch (day) {
@@ -91,21 +92,43 @@ export const getDayByNumber = (dayNumber: number) => {
   }
 };
 
+export const getLessonType = (type: string) => {
+  const _type = type.toLowerCase();
+  switch (_type) {
+    case 'самостоятельная лекция':
+      return LessonTypeEnum.LECTURE;
+    case 'семинар':
+      return LessonTypeEnum.SEMINAR;
+  }
+};
+
+export const getLessonTypeRevert = (type: LessonTypeEnum) => {
+  switch (type) {
+    case 'LECTURE':
+      return 'самостоятельная лекция';
+    case 'SEMINAR':
+      return 'семинар';
+  }
+};
+
 export const getDayRowsIndexes = (day: string) => {
   switch (day) {
     case DayEnum.MONDAY:
-      return { startIndex: 2, time: 3, endIndex: 4 };
+      return {
+        startIndex: 2,
+        endIndex: 5,
+      };
     case DayEnum.TUESDAY:
-      return { startIndex: 5, time: 6, endIndex: 7 };
+      return { startIndex: 6, endIndex: 9 };
     case DayEnum.WEDNESDAY:
-      return { startIndex: 8, time: 9, endIndex: 10 };
+      return { startIndex: 10, endIndex: 13 };
     case DayEnum.THURSDAY:
-      return { startIndex: 11, time: 12, endIndex: 13 };
+      return { startIndex: 14, endIndex: 17 };
     case DayEnum.FRIDAY:
-      return { startIndex: 14, time: 15, endIndex: 16 };
+      return { startIndex: 18, endIndex: 21 };
     case DayEnum.SATURDAY:
-      return { startIndex: 17, time: 18, endIndex: 19 };
+      return { startIndex: 22, endIndex: 25 };
     case DayEnum.SUNDAY:
-      return { startIndex: 20, time: 21, endIndex: 22 };
+      return { startIndex: 26, endIndex: 29 };
   }
 };

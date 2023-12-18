@@ -39,3 +39,5 @@ export const sheetTitlesRange = [
   'P',
   'R',
 ];
+
+export const startSheetRowIndex = 2;

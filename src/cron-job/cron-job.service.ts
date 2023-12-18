@@ -130,17 +130,24 @@ export class CronJobService implements OnModuleInit {
       createLessonCronJobDto.lesson.group.level,
     );
 
-    const reminderText = `Уважаемые учащиеся, напоминаем, что ${
-      createLessonCronJobDto.type === 'day' ? 'завтра' : 'сегодня'
-    } с ${lessonTimeStart.hours}:${
-      lessonTimeStart.minutes === 0 ? '00' : lessonTimeStart.minutes
-    } до ${lessonTimeEnd.hours}:${
-      lessonTimeEnd.minutes === 0 ? '00' : lessonTimeEnd.minutes
-    } пройдёт занятие по направлению “${
-      createLessonCronJobDto.lesson.name.split('.')[0]
-    }. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
-
-    // console.log('reminderText: ', reminderText);
+    let reminderText = '';
+    switch (createLessonCronJobDto.lesson.type) {
+      case 'SEMINAR':
+        reminderText = `Уважаемые студенты, напоминаем, что ${
+          createLessonCronJobDto.type === 'day' ? 'завтра' : 'сегодня'
+        } с ${lessonTimeStart.hours}:${
+          lessonTimeStart.minutes === 0 ? '00' : lessonTimeStart.minutes
+        } до ${lessonTimeEnd.hours}:${
+          lessonTimeEnd.minutes === 0 ? '00' : lessonTimeEnd.minutes
+        } пройдёт занятие по направлению “${
+          createLessonCronJobDto.lesson.name.split('.')[0]
+        }. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
+        break;
+      case 'LECTURE':
+        reminderText =
+          'Уважаемые студенты, сегодня у Вас по расписанию лекция для самостоятельного изучения. На платформе Odin ознакомьтесь с материалами и завершите активность';
+        break;
+    }
 
     const newCronJob = await this.createCronJobForDb({
       name: createLessonCronJobDto.cronJobInfo.name,

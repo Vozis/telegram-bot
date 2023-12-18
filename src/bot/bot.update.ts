@@ -22,7 +22,7 @@ import { AdminGuard } from './guards/admin.guard';
 
 import { LessonService } from '../lesson/lesson.service';
 import { CronJobService } from '../cron-job/cron-job.service';
-import { getTimeObject } from '../utils/functions';
+import { getLessonTypeRevert, getTimeObject } from '../utils/functions';
 import { TaskService } from '../task/task.service';
 import { Actions, BotButtons, BotScenes } from '../utils/constants';
 
@@ -291,7 +291,7 @@ export class BotUpdate implements OnModuleDestroy {
               const lessonTime = getTimeObject(lesson.time);
               return `\n - ${lesson.day}, ${lessonTime.hours}:${
                 lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-              }`;
+              } - ${getLessonTypeRevert(lesson.type)}`;
             })
           : 'Пока занятий нет'
       }`,

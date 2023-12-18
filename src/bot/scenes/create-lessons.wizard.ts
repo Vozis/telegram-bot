@@ -5,6 +5,8 @@ import { Markup } from 'telegraf';
 import { DayEnum } from '../../types';
 import { GroupService } from '../../group/group.service';
 import { BotScenes } from '../../utils/constants';
+import { LessonTypeEnum } from '@prisma/client';
+import { getLessonTypeRevert } from '../../utils/functions';
 
 @Wizard(BotScenes.CreateLessonScene)
 export class CreateLessonScene {
@@ -48,6 +50,31 @@ export class CreateLessonScene {
   async onGroupChoose(@Ctx() ctx: WizardContext) {
     try {
       ctx.wizard.state['groupInfo'] = ctx.callbackQuery['data'];
+      await ctx.wizard.next();
+      await ctx.reply('Отлично! Теперь выбери тип занятия:', {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: 'Самостоятельная лекция',
+                callback_data: LessonTypeEnum.LECTURE,
+              },
+            ],
+            [{ text: 'Семинар', callback_data: LessonTypeEnum.SEMINAR }],
+          ],
+        },
+      });
+      return;
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  @On('callback_query')
+  @WizardStep(3)
+  async onLessonTypeChoose(@Ctx() ctx: WizardContext) {
+    try {
+      ctx.wizard.state['lessonType'] = ctx.callbackQuery['data'];
       const groupName = ctx.wizard.state['groupInfo'].split('|')[0];
       await ctx.wizard.next();
       await ctx.reply(
@@ -75,7 +102,7 @@ export class CreateLessonScene {
   }
 
   @On('text')
-  @WizardStep(3)
+  @WizardStep(4)
   async onLessonNameCreateText(
     @Ctx() ctx: WizardContext,
     @Message('text') msg: string,
@@ -103,7 +130,7 @@ export class CreateLessonScene {
   }
 
   @On('callback_query')
-  @WizardStep(3)
+  @WizardStep(4)
   async onLessonNameCreate(@Ctx() ctx: WizardContext) {
     try {
       ctx.wizard.state['lessonName'] = ctx.callbackQuery['data'];
@@ -128,7 +155,7 @@ export class CreateLessonScene {
   }
 
   @On('callback_query')
-  @WizardStep(4)
+  @WizardStep(5)
   async onDayCreate(@Ctx() ctx: WizardContext) {
     try {
       ctx.wizard.state['day'] = ctx.callbackQuery['data'];
@@ -140,7 +167,7 @@ export class CreateLessonScene {
   }
 
   @On('text')
-  @WizardStep(5)
+  @WizardStep(6)
   async onHourCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
       if (!+msg) return 'Это не число. Попробуй еще раз';
@@ -155,7 +182,7 @@ export class CreateLessonScene {
   }
 
   @On('text')
-  @WizardStep(6)
+  @WizardStep(7)
   async onMinutesCreate(@Ctx() ctx: WizardContext, @Message('text') msg: any) {
     try {
       const regexp = /^[0-9]+$/;
@@ -164,14 +191,14 @@ export class CreateLessonScene {
         return 'Столько минут быть не может! Придется ввести заново';
       ctx.wizard.state['minutes'] = msg;
       await ctx.wizard.next();
-      return 'Почти готово! По умолчанию установлена продолжительность урока: 90 минут. Отправь "90" для продолжения или новое время в минутах';
+      return 'Почти готово! Теперь введи продолжительность урока. Для самостоятельной лекции можешь ввести любое число :)';
     } catch (err) {
       console.log(err.message);
     }
   }
 
   @On('text')
-  @WizardStep(7)
+  @WizardStep(8)
   async onLessonCreateFinish(
     @Message('text') msg: any,
     @Ctx()
@@ -185,6 +212,7 @@ export class CreateLessonScene {
           duration: number;
           groupInfo: string;
           lessonName: string;
+          lessonType: LessonTypeEnum;
         };
       };
     },
@@ -198,6 +226,7 @@ export class CreateLessonScene {
         day: ctx.wizard.state.day,
         time: `${ctx.wizard.state.hour}:${ctx.wizard.state.minutes}`,
         name: ctx.wizard.state.lessonName,
+        type: ctx.wizard.state.lessonType,
         isEnable: true,
         duration: !!ctx.wizard.state.duration ? +ctx.wizard.state.duration : 90,
         groupId: +ctx.wizard.state.groupInfo.split('|')[1],
@@ -207,7 +236,9 @@ export class CreateLessonScene {
         ctx.wizard.state.groupInfo.split('|')[0]
       }" в ${ctx.wizard.state.day}, ${ctx.wizard.state.hour}:${
         ctx.wizard.state.minutes
-      }, Продолжительность урока: ${
+      }, тип: ${getLessonTypeRevert(
+        ctx.wizard.state.lessonType,
+      )}, продолжительность урока: ${
         !!ctx.wizard.state.duration ? +ctx.wizard.state.duration : 90
       } минут`;
     } catch (err) {
@@ -220,7 +251,6 @@ export class CreateLessonScene {
   async leaveScene(
     @Ctx()
     ctx: WizardContext,
-    @Message('text') msg: string,
   ) {
     try {
       await ctx.scene.leave();

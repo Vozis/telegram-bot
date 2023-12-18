@@ -11,7 +11,7 @@ import { LessonService } from '../../lesson/lesson.service';
 import { GroupService } from '../../group/group.service';
 import { WizardContext } from 'telegraf/typings/scenes';
 import { Markup } from 'telegraf';
-import { getTimeObject, toHoursAndMinutes } from '../../utils/functions';
+import { getLessonTypeRevert, getTimeObject } from '../../utils/functions';
 import { BotScenes } from '../../utils/constants';
 
 @Wizard(BotScenes.GetLessonsScene)
@@ -80,7 +80,7 @@ export class GetLessonsScene {
               const lessonTime = getTimeObject(lesson.time);
               return `\n - ${lesson.day}, ${lessonTime.hours}:${
                 lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-              }`;
+              } - ${getLessonTypeRevert(lesson.type)}`;
             })
           : 'Пока занятий нет'
       }`,
@@ -97,7 +97,6 @@ export class GetLessonsScene {
   async leaveScene(
     @Ctx()
     ctx: WizardContext,
-    @Message('text') msg: string,
   ) {
     try {
       await ctx.scene.leave();

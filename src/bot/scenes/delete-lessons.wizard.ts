@@ -4,7 +4,7 @@ import { LessonService } from '../../lesson/lesson.service';
 import { Markup } from 'telegraf';
 
 import { GroupService } from '../../group/group.service';
-import { getTimeObject } from '../../utils/functions';
+import { getLessonTypeRevert, getTimeObject } from '../../utils/functions';
 import { BotScenes } from '../../utils/constants';
 
 @Wizard(BotScenes.DeleteLessonScene)
@@ -75,7 +75,7 @@ export class DeleteLessonScene {
               return Markup.button.callback(
                 `${lesson.day}, ${lessonTime.hours}:${
                   lessonTime.minutes === 0 ? '00' : lessonTime.minutes
-                }`,
+                } - ${getLessonTypeRevert(lesson.type)}`,
                 `${lesson.day}, ${lessonTime.hours}:${
                   lessonTime.minutes === 0 ? '00' : lessonTime.minutes
                 }|${lesson.id}`,

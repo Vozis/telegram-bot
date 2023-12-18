@@ -1,10 +1,11 @@
-import { Prisma } from '@prisma/client';
+import { LessonTypeEnum, Prisma } from '@prisma/client';
 
 export const lessonSelectObj: Prisma.LessonSelect = {
   id: true,
   day: true,
   time: true,
   name: true,
+  type: true,
   duration: true,
   isEnable: true,
   groupId: true,
@@ -26,6 +27,7 @@ export interface LessonObj {
   name: string;
   time: string;
   duration: number;
+  type: string;
 }
 
 export type LessonScheduleObject = Record<string, LessonObj[]>;

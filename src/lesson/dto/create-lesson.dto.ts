@@ -1,4 +1,11 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { LessonTypeEnum } from '@prisma/client';
 
 export class CreateLessonDto {
   @IsString({
@@ -14,12 +21,15 @@ export class CreateLessonDto {
   })
   name: string;
 
+  @IsEnum(LessonTypeEnum)
+  type: LessonTypeEnum;
+
   @IsBoolean()
   isEnable: boolean;
 
   @IsNumber({}, { message: 'Продолжительность должна быть числом' })
   @IsOptional()
-  duration: number;
+  duration?: number;
 
   @IsNumber({}, { message: 'groupId должны быть числом' })
   groupId: number;

@@ -46,13 +46,13 @@ model Group {
 }
 
 model Lesson {
-  id   Int    @id @default(autoincrement())
-  day  String
-  time String @default("12:00")
-  name String @default("Новый урок") @db.VarChar(1000)
-
-  isEnable Boolean @default(true) @map("is_enable")
-  duration Int     @default(90)
+  id       Int            @id @default(autoincrement())
+  day      String
+  time     String         @default("12:00")
+  name     String         @default("Новый урок") @db.VarChar(1000)
+  type     LessonTypeEnum @default(SEMINAR)
+  isEnable Boolean        @default(true) @map("is_enable")
+  duration Int?           @default(90)
 
   group   Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId Int?
@@ -96,4 +96,9 @@ enum LevelEnum {
   BASE
   INTERMEDIATE
   ADVANCED
+}
+
+enum LessonTypeEnum {
+  LECTURE
+  SEMINAR
 }

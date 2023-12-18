@@ -118,6 +118,7 @@ export class SheetService implements OnModuleInit {
       name: string;
       time: string;
       duration: string | number;
+      type: string;
     },
   ) {
     console.log('Начало записи в таблицу');
@@ -126,7 +127,7 @@ export class SheetService implements OnModuleInit {
     await this.googleSheetConnectorService.writeRange(
       this.googleSheetId,
       range,
-      [[value.name], [value.time], [value.duration]],
+      [[value.name], [value.time], [value.duration], [value.type]],
     );
 
     console.log('Новые данные записаны');

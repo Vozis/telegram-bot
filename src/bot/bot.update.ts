@@ -2,6 +2,7 @@ import {
   Action,
   Command,
   Ctx,
+  Hears,
   Help,
   InjectBot,
   Sender,
@@ -309,6 +310,11 @@ export class BotUpdate implements OnModuleDestroy {
       });
       return;
     }
+  }
+
+  @Hears('a')
+  async getScheduleCron() {
+    await this.cronJobService.getCronJobsFromCronSchedule();
   }
 
   //  Private methods =================================================================

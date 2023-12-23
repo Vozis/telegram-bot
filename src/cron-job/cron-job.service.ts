@@ -53,220 +53,261 @@ export class CronJobService implements OnModuleInit {
   }
 
   async createTaskCronJob(createTaskCronJobDto: CreateTaskCronJobForDb) {
-    const taskText = `${createTaskCronJobDto.text}`;
-    const reminderText = `Новая задачка на сегодня! ${taskText}`;
-    const taskDay = changeDayForCronJobs(createTaskCronJobDto.day);
-    const taskTime = `0 10 * * ${taskDay}`;
-    const slugName = slugify(createTaskCronJobDto.groupName, {
-      locale: 'en',
-      lower: true,
-    });
-
-    const _group = await this.groupService.getBySlug(slugName);
-    const taskCronName = `${_group.id}-${taskDay}`;
-    const taskActions =
-      createTaskCronJobDto.type === 'тест'
-        ? [
-            createTaskCronJobDto.answer1,
-            createTaskCronJobDto.answer2,
-            createTaskCronJobDto.answer3,
-            createTaskCronJobDto.answer4,
-          ]
-        : [];
-
-    const _cronJob = await this.getByNameFromDb(taskCronName);
-
-    if (!_cronJob) {
-      if (!taskText) return;
-      return await this.createCronJobForDb({
-        name: taskCronName,
-        type: CronJobType.TASK,
-        message: reminderText,
-        actions: taskActions,
-        time: taskTime,
-        telegramId: _group.telegramId,
-        groupName: _group.name,
-        lessonId: null,
+    try {
+      const taskText = `${createTaskCronJobDto.text}`;
+      const reminderText = `Новая задачка на сегодня! ${taskText}`;
+      const taskDay = changeDayForCronJobs(createTaskCronJobDto.day);
+      const taskTime = `0 10 * * ${taskDay}`;
+      const slugName = slugify(createTaskCronJobDto.groupName, {
+        locale: 'en',
+        lower: true,
       });
-    } else {
-      await this.deleteCronJobFromCronSchedule(taskCronName);
 
-      if (!taskText)
-        return this.prismaService.cronJob.delete({
-          where: {
-            name: taskCronName,
-          },
-        });
-      const updatedTaskCron = await this.prismaService.cronJob.update({
-        where: {
+      const _group = await this.groupService.getBySlug(slugName);
+      const taskCronName = `${_group.id}-${taskDay}`;
+      const taskActions =
+        createTaskCronJobDto.type === 'тест'
+          ? [
+              createTaskCronJobDto.answer1,
+              createTaskCronJobDto.answer2,
+              createTaskCronJobDto.answer3,
+              createTaskCronJobDto.answer4,
+            ]
+          : [];
+
+      const _cronJob = await this.getByNameFromDb(taskCronName);
+
+      if (!_cronJob) {
+        if (!taskText) return;
+        return await this.createCronJobForDb({
           name: taskCronName,
-        },
-        data: {
+          type: CronJobType.TASK,
           message: reminderText,
           actions: taskActions,
           time: taskTime,
-        },
-      });
+          telegramId: _group.telegramId,
+          groupName: _group.name,
+          lessonId: null,
+        });
+      } else {
+        await this.deleteCronJobFromCronSchedule(taskCronName);
 
-      await this.addCronJobToCronSchedule({
-        name: updatedTaskCron.name,
-        time: updatedTaskCron.time,
-        message: updatedTaskCron.message,
-        telegramId: _group.telegramId,
-        type: updatedTaskCron.type,
-        actions: taskActions,
-      });
+        if (!taskText)
+          return this.prismaService.cronJob.delete({
+            where: {
+              name: taskCronName,
+            },
+          });
+        const updatedTaskCron = await this.prismaService.cronJob.update({
+          where: {
+            name: taskCronName,
+          },
+          data: {
+            message: reminderText,
+            actions: taskActions,
+            time: taskTime,
+          },
+        });
 
-      return updatedTaskCron;
+        await this.addCronJobToCronSchedule({
+          name: updatedTaskCron.name,
+          time: updatedTaskCron.time,
+          message: updatedTaskCron.message,
+          telegramId: _group.telegramId,
+          type: updatedTaskCron.type,
+          actions: taskActions,
+        });
+
+        return updatedTaskCron;
+      }
+    } catch (error) {
+      console.log('createTaskCronJob error: ', error);
     }
   }
 
   async createLessonCronJob(
     createLessonCronJobDto: CreateLessonCronJobForDb,
   ): Promise<CronJobSelect> {
-    const lessonTimeStart = getTimeObject(createLessonCronJobDto.lesson.time);
-    const lessonTimeEnd = addMinutes(createLessonCronJobDto.lesson.time, 90);
-    const groupLevel = changeGroupLevel(
-      createLessonCronJobDto.lesson.group.level,
-    );
+    try {
+      const lessonTimeStart = getTimeObject(createLessonCronJobDto.lesson.time);
+      const lessonTimeEnd = addMinutes(createLessonCronJobDto.lesson.time, 90);
+      const groupLevel = changeGroupLevel(
+        createLessonCronJobDto.lesson.group.level,
+      );
 
-    let reminderText = '';
-    switch (createLessonCronJobDto.lesson.type) {
-      case 'SEMINAR':
-        reminderText = `Уважаемые студенты, напоминаем, что ${
-          createLessonCronJobDto.type === 'day' ? 'завтра' : 'сегодня'
-        } с ${lessonTimeStart.hours}:${
-          lessonTimeStart.minutes === 0 ? '00' : lessonTimeStart.minutes
-        } до ${lessonTimeEnd.hours}:${
-          lessonTimeEnd.minutes === 0 ? '00' : lessonTimeEnd.minutes
-        } пройдёт занятие по направлению “${
-          createLessonCronJobDto.lesson.name.split('.')[0]
-        }. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
-        break;
-      case 'LECTURE':
-        reminderText =
-          'Уважаемые студенты, сегодня у Вас по расписанию лекция для самостоятельного изучения. На платформе Odin ознакомьтесь с материалами и завершите активность';
-        break;
+      let reminderText = '';
+      switch (createLessonCronJobDto.lesson.type) {
+        case 'SEMINAR':
+          reminderText = `Уважаемые студенты, напоминаем, что ${
+            createLessonCronJobDto.type === 'day' ? 'завтра' : 'сегодня'
+          } с ${lessonTimeStart.hours}:${
+            lessonTimeStart.minutes === 0 ? '00' : lessonTimeStart.minutes
+          } до ${lessonTimeEnd.hours}:${
+            lessonTimeEnd.minutes === 0 ? '00' : lessonTimeEnd.minutes
+          } пройдёт занятие по направлению “${
+            createLessonCronJobDto.lesson.name.split('.')[0]
+          }. ${groupLevel} уровень.” на платформе Odin. Подключаемся за 10 минут до начала занятия!`;
+          break;
+        case 'LECTURE':
+          reminderText =
+            'Уважаемые студенты, сегодня у Вас по расписанию лекция для самостоятельного изучения. На платформе Odin ознакомьтесь с материалами и завершите активность.';
+          break;
+      }
+
+      const newCronJob = await this.createCronJobForDb({
+        name: createLessonCronJobDto.cronJobInfo.name,
+        time: createLessonCronJobDto.cronJobInfo.time,
+        lessonId: createLessonCronJobDto.cronJobInfo.lessonId,
+        telegramId: createLessonCronJobDto.cronJobInfo.telegramId,
+        message: reminderText,
+        type: createLessonCronJobDto.cronJobInfo.type,
+        actions: createLessonCronJobDto.cronJobInfo.actions,
+      });
+
+      return newCronJob;
+    } catch (error) {
+      console.log('createLessonCronJobDto error: ', error);
     }
-
-    const newCronJob = await this.createCronJobForDb({
-      name: createLessonCronJobDto.cronJobInfo.name,
-      time: createLessonCronJobDto.cronJobInfo.time,
-      lessonId: createLessonCronJobDto.cronJobInfo.lessonId,
-      telegramId: createLessonCronJobDto.cronJobInfo.telegramId,
-      message: reminderText,
-      type: CronJobType.LESSON,
-      actions: createLessonCronJobDto.cronJobInfo.actions,
-    });
-
-    return newCronJob;
   }
 
   async addCronJobToCronSchedule(data: CreateCronJobDto) {
-    const job = new CronJob(
-      data.time,
-      () => {
-        console.log(`Уведомление сработало "${data.message}!"`);
-        switch (data.type) {
-          case 'LESSON':
-            this.bot.telegram.sendMessage(data.telegramId, data.message);
-            break;
-          case 'TASK':
-            this.bot.telegram.sendMessage(data.telegramId, data.message);
-            break;
-        }
-      },
-      null,
-      true,
-      'Europe/Moscow',
-    );
-    this.schedulerRegistry.addCronJob(data.name, job);
-    job.start();
+    try {
+      // console.log(
+      //   'data: ',
+      //   JSON.stringify({
+      //     time: data.time,
+      //     name: data.name,
+      //     type: data.type,
+      //     id: data.telegramId,
+      //   }),
+      // );
 
-    console.log(`Добавлена задача с уведомлением ${data.name}`);
+      const job = new CronJob(
+        data.time,
+        () => {
+          console.log(`Уведомление для урока сработало "${data.message}!"`);
+          this.bot.telegram.sendMessage(data.telegramId, data.message);
+          return;
+        },
+        null,
+        true,
+        'Europe/Moscow',
+      );
+
+      this.schedulerRegistry.addCronJob(data.name, job);
+      job.start();
+
+      console.log(`Добавлена задача с уведомлением ${data.name}`);
+    } catch (error) {
+      console.log('addCronJobToCronSchedule error: ', error);
+    }
   }
 
   async getByNameFromDb(name: string) {
-    const _cronJob = await this.prismaService.cronJob.findUnique({
-      where: {
-        name,
-      },
-      select: cronJobSelectObj,
-    });
+    try {
+      const _cronJob = await this.prismaService.cronJob.findUnique({
+        where: {
+          name,
+        },
+        select: cronJobSelectObj,
+      });
 
-    return _cronJob ? _cronJob : null;
+      return _cronJob ? _cronJob : null;
+    } catch (error) {
+      console.log('getByNameFromDb error: ', error);
+    }
   }
 
   async getCronJobsFromCronSchedule() {
-    const jobs = await this.schedulerRegistry.getCronJobs();
+    try {
+      const jobs = await this.schedulerRegistry.getCronJobs();
 
-    jobs.forEach((value, key, map) => {
-      console.log('Value:', value.cronTime.source);
-    });
+      jobs.forEach((value, key, map) => {
+        console.log('Value:', value.cronTime.source);
+      });
+    } catch (error) {
+      console.log('getCronJobsFromCronSchedule error: ', error);
+    }
   }
 
   async getCronJobsForLessonFromDb(lessonId: number) {
-    const lessonsFromDb = await this.prismaService.cronJob.findMany({
-      where: {
-        lesson: {
-          id: lessonId,
+    try {
+      const lessonsFromDb = await this.prismaService.cronJob.findMany({
+        where: {
+          lesson: {
+            id: lessonId,
+          },
         },
-      },
-    });
+      });
 
-    return lessonsFromDb;
+      return lessonsFromDb;
+    } catch (error) {
+      console.log('getCronJobsForLessonFromDb error: ', error);
+    }
   }
 
   async deleteCronJobFromCronSchedule(jobName: string) {
-    await this.schedulerRegistry.deleteCronJob(jobName);
+    try {
+      await this.schedulerRegistry.deleteCronJob(jobName);
 
-    return console.log(`Удалена задача с уведомлением ${jobName}`);
+      return console.log(`Удалена задача с уведомлением ${jobName}`);
+    } catch (error) {
+      console.log('deleteCronJobFromCronSchedule error: ', error);
+    }
   }
 
   async deleteByLessonIdFromDb(lessonId: number) {
-    return this.prismaService.cronJob.deleteMany({
-      where: {
-        lessonId,
-      },
-    });
+    try {
+      return this.prismaService.cronJob.deleteMany({
+        where: {
+          lessonId,
+        },
+      });
+    } catch (error) {
+      console.log('deleteByLessonIdFromDb error: ', error);
+    }
   }
 
   private async createCronJobForDb(
     createCronJobDto: CreateCronJobDto,
   ): Promise<CronJobSelect> {
-    const newCronJob = await this.prismaService.cronJob.create({
-      data: {
-        name: createCronJobDto.name,
-        time: createCronJobDto.time,
-        type: createCronJobDto.type,
-        actions: createCronJobDto.actions,
-        lesson: createCronJobDto.lessonId
-          ? {
-              connect: {
-                id: createCronJobDto.lessonId,
-              },
-            }
-          : {},
-        message: createCronJobDto.message,
-        group: {
-          connect: {
-            telegramId: createCronJobDto.telegramId,
+    try {
+      const newCronJob = await this.prismaService.cronJob.create({
+        data: {
+          name: createCronJobDto.name,
+          time: createCronJobDto.time,
+          type: createCronJobDto.type,
+          actions: createCronJobDto.actions,
+          lesson: createCronJobDto.lessonId
+            ? {
+                connect: {
+                  id: createCronJobDto.lessonId,
+                },
+              }
+            : {},
+          message: createCronJobDto.message,
+          group: {
+            connect: {
+              telegramId: createCronJobDto.telegramId,
+            },
           },
         },
-      },
-      select: cronJobSelectObj,
-    });
+        select: cronJobSelectObj,
+      });
 
-    await this.addCronJobToCronSchedule({
-      name: newCronJob.name,
-      time: newCronJob.time,
-      lessonId: newCronJob.lessonId,
-      message: newCronJob.message,
-      telegramId: createCronJobDto.telegramId,
-      type: newCronJob.type,
-      actions: createCronJobDto.actions,
-    });
+      await this.addCronJobToCronSchedule({
+        name: newCronJob.name,
+        time: newCronJob.time,
+        lessonId: newCronJob.lessonId,
+        message: newCronJob.message,
+        telegramId: createCronJobDto.telegramId,
+        type: newCronJob.type,
+        actions: createCronJobDto.actions,
+      });
 
-    return newCronJob;
+      return newCronJob;
+    } catch (error) {
+      console.log('createCronJobForDb error: ', error);
+    }
   }
 }

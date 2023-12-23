@@ -1,4 +1,4 @@
-import { LessonTypeEnum, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export const lessonSelectObj: Prisma.LessonSelect = {
   id: true,

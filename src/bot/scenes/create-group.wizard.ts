@@ -42,7 +42,13 @@ export class CreateGroupScene {
         await ctx
           .reply(`Группа "${groupInfo['title']}" уже создана.`)
           .then(({ message_id }) => {
-            setTimeout(() => ctx.deleteMessage(message_id), 5000);
+            setTimeout(async () => {
+              try {
+                await ctx.deleteMessage(message_id);
+              } catch (error) {
+                console.log(error.message);
+              }
+            }, 10000);
           });
         return;
       }
@@ -109,7 +115,13 @@ export class CreateGroupScene {
           ),
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -151,7 +163,13 @@ export class CreateGroupScene {
           )} уровень.`,
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 5000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {

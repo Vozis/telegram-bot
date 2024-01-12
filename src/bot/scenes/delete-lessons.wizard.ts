@@ -40,7 +40,13 @@ export class DeleteLessonScene {
           ),
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -87,7 +93,13 @@ export class DeleteLessonScene {
           ),
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -125,7 +137,13 @@ export class DeleteLessonScene {
           ),
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -161,7 +179,13 @@ export class DeleteLessonScene {
       await ctx
         .reply(`Удален урок "${lessonInfo.split('|')[0]}"`)
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {

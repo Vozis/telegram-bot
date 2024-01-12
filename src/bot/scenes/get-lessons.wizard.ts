@@ -86,7 +86,13 @@ export class GetLessonsScene {
       }`,
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
     } catch (err) {
       console.log(err.message);

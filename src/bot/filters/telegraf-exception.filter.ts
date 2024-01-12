@@ -9,6 +9,8 @@ export class TelegrafExceptionFilter implements ExceptionFilter {
     const telegrafHost = TelegrafArgumentsHost.create(host);
     const ctx = telegrafHost.getContext<ContextInterface>();
 
+    console.log('hey from exception filter');
+
     if (ctx.update['message']) {
       const errorObject = {
         message: exception.message,

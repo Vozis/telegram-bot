@@ -6,7 +6,6 @@ import {
   Help,
   InjectBot,
   Sender,
-  Start,
   Update,
 } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
@@ -39,7 +38,7 @@ export class BotUpdate implements OnModuleDestroy {
     private readonly taskService: TaskService,
   ) {}
 
-  @Start()
+  @Command('start')
   async showStartButton(@Ctx() ctx: ContextInterface, @Sender() sender: any) {
     try {
       await this.bot.telegram.setMyCommands([
@@ -63,15 +62,25 @@ export class BotUpdate implements OnModuleDestroy {
           },
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
       console.log(err.message);
       await ctx
         .reply(`Хьюстон, у нас проблема. Проверь ошибку в логах`)
-        .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+        .then(async ({ message_id }) => {
+          try {
+            setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          } catch (err) {
+            console.log(err.message);
+          }
         });
       return;
     }
@@ -83,7 +92,13 @@ export class BotUpdate implements OnModuleDestroy {
     await ctx
       .reply('Данный раздел еще на доработке :(')
       .then(({ message_id }) => {
-        setTimeout(() => ctx.deleteMessage(message_id), 3000);
+        setTimeout(async () => {
+          try {
+            await ctx.deleteMessage(message_id);
+          } catch (error) {
+            console.log(error.message);
+          }
+        }, 10000);
       });
     return;
   }
@@ -140,9 +155,13 @@ export class BotUpdate implements OnModuleDestroy {
         })
         .then(({ message_id }) => {
           ctx.deleteMessage(startMessage);
-          setTimeout(() => {
-            ctx.deleteMessage(message_id);
-          }, 3000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -203,7 +222,13 @@ export class BotUpdate implements OnModuleDestroy {
           },
         })
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 10000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {
@@ -240,7 +265,13 @@ export class BotUpdate implements OnModuleDestroy {
             disable_notification: true,
           })
           .then(({ message_id }) => {
-            setTimeout(() => ctx.deleteMessage(message_id), 3000);
+            setTimeout(async () => {
+              try {
+                await ctx.deleteMessage(message_id);
+              } catch (error) {
+                console.log(error.message);
+              }
+            }, 10000);
           });
         return;
       } else {
@@ -260,7 +291,13 @@ export class BotUpdate implements OnModuleDestroy {
             },
           })
           .then(({ message_id }) => {
-            setTimeout(() => ctx.deleteMessage(message_id), 3000);
+            setTimeout(async () => {
+              try {
+                await ctx.deleteMessage(message_id);
+              } catch (error) {
+                console.log(error.message);
+              }
+            }, 10000);
           });
         return;
       }
@@ -299,7 +336,13 @@ export class BotUpdate implements OnModuleDestroy {
           { disable_notification: true },
         )
         .then(({ message_id }) => {
-          setTimeout(() => ctx.deleteMessage(message_id), 3000);
+          setTimeout(async () => {
+            try {
+              await ctx.deleteMessage(message_id);
+            } catch (error) {
+              console.log(error.message);
+            }
+          }, 10000);
         });
       return;
     } catch (err) {

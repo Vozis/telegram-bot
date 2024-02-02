@@ -1,0 +1,10 @@
+name: TgBOt Workflow
+
+  on: workflow_dispatch
+   jobs:
+     prunt:
+       runs-on: ubuntu-22.04
+       steps:
+         - name: Print to console
+           run: echo Hello GM Actions!
+

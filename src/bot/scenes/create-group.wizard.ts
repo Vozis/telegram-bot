@@ -1,12 +1,4 @@
-import {
-  Ctx,
-  Hears,
-  InjectBot,
-  Message,
-  On,
-  Wizard,
-  WizardStep,
-} from 'nestjs-telegraf';
+import { Ctx, Hears, InjectBot, On, Wizard, WizardStep } from 'nestjs-telegraf';
 import { WizardContext } from 'telegraf/typings/scenes';
 import { LessonService } from '../../lesson/lesson.service';
 import { Markup, Telegraf } from 'telegraf';
@@ -14,7 +6,6 @@ import { GroupService } from '../../group/group.service';
 import { ContextInterface } from '../types/context.interface';
 import { LevelEnum } from '@prisma/client';
 import { changeGroupLevel } from '../../utils/functions';
-import { BadRequestException } from '@nestjs/common';
 import { BotScenes } from '../../utils/constants';
 
 @Wizard(BotScenes.CreateGroupScene)
@@ -182,7 +173,6 @@ export class CreateGroupScene {
   async leaveScene(
     @Ctx()
     ctx: WizardContext,
-    @Message('text') msg: string,
   ) {
     try {
       await ctx.scene.leave();

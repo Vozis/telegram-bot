@@ -1,12 +1,4 @@
-import {
-  Composer,
-  Ctx,
-  Hears,
-  Message,
-  On,
-  Wizard,
-  WizardStep,
-} from 'nestjs-telegraf';
+import { Ctx, Hears, On, Wizard, WizardStep } from 'nestjs-telegraf';
 import { LessonService } from '../../lesson/lesson.service';
 import { GroupService } from '../../group/group.service';
 import { WizardContext } from 'telegraf/typings/scenes';

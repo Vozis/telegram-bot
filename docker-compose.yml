@@ -5,16 +5,9 @@ services:
     container_name: bot-app
     build:
       dockerfile: Dockerfile
-      context: .
+      context: ./
     env_file:
       - .env
-#    environment:
-#      POSTGRES_HOST: "46.19.64.203"
-#      POSTGRES_PORT: "5435"
-#      POSTGRES_DB: "yama-bot"
-#      POSTGRES_USER: "postgres"
-#      POSTGRES_PASSWORD: "root"
-#      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules

@@ -5,7 +5,6 @@ import {
   Hears,
   Help,
   InjectBot,
-  Sender,
   Update,
 } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
@@ -39,7 +38,7 @@ export class BotUpdate implements OnModuleDestroy {
   ) {}
 
   @Command('start')
-  async showStartButton(@Ctx() ctx: ContextInterface, @Sender() sender: any) {
+  async showStartButton(@Ctx() ctx: ContextInterface) {
     try {
       await this.bot.telegram.setMyCommands([
         { command: BotButtons.START, description: 'Начало работы' },
@@ -129,7 +128,7 @@ export class BotUpdate implements OnModuleDestroy {
   }
 
   @Action(Actions.UpdateTasks)
-  async updateTasksScene(@Ctx() ctx: ContextInterface) {
+  async updateTasksScene() {
     try {
       return await this.taskService.getTasksFromGoogleSheet();
     } catch (err) {
@@ -244,7 +243,7 @@ export class BotUpdate implements OnModuleDestroy {
   // @UseFilters(TelegrafExceptionFilter)
   @UseGuards(AdminGuard)
   @Action('getCronJobs')
-  async getCronJobs(@Ctx() ctx: ContextInterface) {
+  async getCronJobs() {
     const jobs = await this.cronJobService.getCronJobsFromCronSchedule();
 
     return jobs;

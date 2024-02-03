@@ -1,7 +1,4 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
-import { GoogleSheetConnectorService } from 'nest-google-sheet-connector-modify';
 import { ConfigService } from '@nestjs/config';
 import { CronJobService } from '../cron-job/cron-job.service';
 import { CreateTaskCronJobForDb } from '../cron-job/cron-job.type';
@@ -51,7 +48,7 @@ export class TaskService implements OnModuleInit {
       .map(item => item.properties.title);
 
     for (const item of googleSheetTitles) {
-      const data = await this.saveTasksForWeek(item);
+      await this.saveTasksForWeek(item);
 
       // console.log(`data ${item}: `, data);
     }

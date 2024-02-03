@@ -63,7 +63,7 @@ export class UserService {
       },
     });
 
-    return !isExist;
+    return updatedUser;
   }
 
   async getAll() {

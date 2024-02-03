@@ -1,4 +1,4 @@
-import { Ctx, Hears, Message, On, Wizard, WizardStep } from 'nestjs-telegraf';
+import { Ctx, Hears, On, Wizard, WizardStep } from 'nestjs-telegraf';
 import { WizardContext } from 'telegraf/typings/scenes';
 import { LessonService } from '../../lesson/lesson.service';
 import { Markup } from 'telegraf';
@@ -197,7 +197,6 @@ export class DeleteLessonScene {
   async leaveScene(
     @Ctx()
     ctx: WizardContext,
-    @Message('text') msg: string,
   ) {
     try {
       await ctx.scene.leave();

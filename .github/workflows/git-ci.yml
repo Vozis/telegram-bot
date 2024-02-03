@@ -1,10 +1,38 @@
-name: TgBOt Workflow
+name: Deploy app
 
-on: workflow_dispatch
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [master, dev]
+
 jobs:
-  print:
-    runs-on: self-hosted
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Print to console
-        run: echo Hello GM Actions!
+      - name: Start working
+        run: echo Start working!
+      - name: Get files from repo
+        run: actions/checkout@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint application
+        run: npm run lint
+  prepare:
+    runs-on: self-hosted
+    needs: test
+    steps:
+      - name: Stop current containers
+        run: docker-compose-down
+      - name: Remove unused containers
+        run: docker system prune -a -f
+
+  deploy:
+    runs-on: self-hosted
+    needs: prepare
+    steps:
+      - name: Get files from repo
+        run: actions/checkout@v3
+      - name: Pull to docker
+        run: docker-compose up -d --build
 

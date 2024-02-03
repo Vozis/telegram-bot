@@ -222,7 +222,7 @@ export class CronJobService implements OnModuleInit {
     try {
       const jobs = await this.schedulerRegistry.getCronJobs();
 
-      jobs.forEach((value, key, map) => {
+      jobs.forEach(value => {
         console.log('Value:', value.cronTime.source);
       });
     } catch (error) {

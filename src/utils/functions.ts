@@ -1,6 +1,5 @@
 import { DayEnum } from '../types';
 import { LessonTypeEnum, LevelEnum } from '@prisma/client';
-import { startSheetRowIndex } from './constants';
 
 export const changeDayForCronJobs = (day: string) => {
   switch (day) {

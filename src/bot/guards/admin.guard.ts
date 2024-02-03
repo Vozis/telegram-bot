@@ -1,13 +1,8 @@
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
-import {
-  TelegrafExecutionContext,
-  TelegrafException,
   InjectBot,
+  TelegrafException,
+  TelegrafExecutionContext,
 } from 'nestjs-telegraf';
 import { ContextInterface } from '../types/context.interface';
 

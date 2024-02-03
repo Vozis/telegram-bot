@@ -13,7 +13,7 @@ jobs:
       - name: Start working
         run: echo Start working!
       - name: Get files from repo
-        run: actions/checkout@v3
+        uses: actions/checkout@v3
       - name: Install dependencies
         run: npm ci
       - name: Lint application
@@ -32,7 +32,7 @@ jobs:
     needs: prepare
     steps:
       - name: Get files from repo
-        run: actions/checkout@v3
+        uses: actions/checkout@v3
       - name: Pull to docker
         run: docker-compose up -d --build
 

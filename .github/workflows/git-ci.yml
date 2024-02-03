@@ -22,6 +22,8 @@ jobs:
     runs-on: self-hosted
     needs: test
     steps:
+      - name: Get files from repo
+        uses: actions/checkout@v3
       - name: Stop current containers
         run: docker-compose down
       - name: Remove unused containers

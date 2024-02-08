@@ -70,7 +70,7 @@ export class LessonService {
       const groupIndex = await this.sheetService.findIndex(
         newLesson.group.name,
       );
-      await this.sheetService.writeToSheet(
+      await this.sheetService.writeLessonToSheet(
         'Расписание',
         groupIndex,
         newLesson.day,
@@ -164,7 +164,7 @@ export class LessonService {
       });
 
       const groupIndex = await this.sheetService.findIndex(lesson.group.name);
-      await this.sheetService.writeToSheet(
+      await this.sheetService.writeLessonToSheet(
         'Расписание',
         groupIndex,
         lesson.day,

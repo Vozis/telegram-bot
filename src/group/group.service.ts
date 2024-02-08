@@ -30,7 +30,7 @@ export class GroupService {
       lower: true,
     });
 
-    return this.prismaService.group.create({
+    const newGroup = await this.prismaService.group.create({
       data: {
         name: createGroupsDto.name,
         slug: shortName,
@@ -39,6 +39,16 @@ export class GroupService {
       },
       select: groupSelectObj,
     });
+
+    await this.addToSheet(newGroup.name);
+
+    return newGroup;
+  }
+
+  async addToSheet(groupName: string) {
+    const { lastIndex } = await this.sheetService.getRangeSize();
+    const name = groupName.split('.')[0];
+    await this.sheetService.writeGroupToSheet(lastIndex, name);
   }
 
   async getAllGroups(): Promise<GroupSelect[]> {

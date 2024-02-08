@@ -110,7 +110,23 @@ export class SheetService implements OnModuleInit {
     };
   }
 
-  async writeToSheet(
+  async writeGroupToSheet(
+    columnIndex: number,
+    value: string,
+    sheetName = 'Расписание',
+  ) {
+    console.log(`Добавление группы "${value}" в таблицу`);
+    await this.googleSheetConnectorService.writeCell(
+      this.googleSheetId,
+      `${sheetName}!${sheetTitlesRange[columnIndex]}1`,
+      value,
+    );
+
+    console.log('Группа добавлена');
+    return;
+  }
+
+  async writeLessonToSheet(
     sheetName: string,
     columnIndex: number,
     day: string,

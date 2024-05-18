@@ -32,36 +32,6 @@ export class SheetService implements OnModuleInit {
     );
   }
 
-  // mapRowsToObjectList(rows: string[][]): object[] {
-  //   const [keys, ...values] = rows;
-  //   return values.map(valuesArr => {
-  //     return valuesArr.reduce((obj, value, index) => {
-  //       obj[keys[index]] = value;
-  //       return obj;
-  //     }, {});
-  //   });
-  // }
-
-  // mapRowsToObjectList2(rows: string[][]): object[] {
-  //   const [keys, ...values] = rows;
-  //   return values.map(valuesArr => {
-  //     console.log('valueArr:', valuesArr);
-  //     return valuesArr.reduce((obj, value, index) => {
-  //       obj[keys[index]] = value;
-  //       return obj;
-  //     }, {});
-  //   });
-  // }
-
-  /**
-   * Converts an Objet to a Google Sheet Row
-   * @param object - any object
-   * @returns Row
-   */
-  mapObjectToRow(object: object): string[] {
-    return Object.values(object);
-  }
-
   async findIndex(
     searchText: string,
     sheetName: string = 'Расписание',
@@ -149,6 +119,4 @@ export class SheetService implements OnModuleInit {
     console.log('Новые данные записаны');
     return;
   }
-
-  async createSheet() {}
 }

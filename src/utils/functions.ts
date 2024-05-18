@@ -98,6 +98,8 @@ export const getLessonType = (type: string) => {
       return LessonTypeEnum.LECTURE;
     case 'семинар':
       return LessonTypeEnum.SEMINAR;
+    case 'аттестация':
+      return LessonTypeEnum.ATTESTATION;
   }
 };
 
@@ -107,6 +109,8 @@ export const getLessonTypeRevert = (type: LessonTypeEnum) => {
       return 'самостоятельная лекция';
     case 'SEMINAR':
       return 'семинар';
+    case 'ATTESTATION':
+      return 'аттестация';
   }
 };
 

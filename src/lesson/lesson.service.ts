@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { PrismaService } from '../prisma.service';
@@ -31,11 +31,15 @@ export class LessonService {
     private readonly sheetService: SheetService,
     private readonly groupService: GroupService,
   ) {}
-  async createLesson(createLessonDto: CreateLessonDto): Promise<LessonSelect> {
+  async createLesson(
+    sheetName: string = 'Расписание',
+    createLessonDto: CreateLessonDto,
+  ): Promise<LessonSelect> {
     try {
       const _lesson = await this.prismaService.lesson.findUnique({
         where: {
           compositeTime: {
+            type: createLessonDto.type,
             groupId: createLessonDto.groupId,
             day: createLessonDto.day,
             time: createLessonDto.time,
@@ -43,7 +47,7 @@ export class LessonService {
         },
       });
 
-      if (_lesson) throw new BadRequestException('Такой урок уже создан');
+      if (_lesson) console.log('Такой урок уже есть, будет обновление');
 
       const newLesson = await this.prismaService.lesson.create({
         data: {
@@ -69,9 +73,11 @@ export class LessonService {
 
       const groupIndex = await this.sheetService.findIndex(
         newLesson.group.name,
+        sheetName,
       );
+
       await this.sheetService.writeLessonToSheet(
-        'Расписание',
+        sheetName,
         groupIndex,
         newLesson.day,
         {
@@ -102,8 +108,6 @@ export class LessonService {
     }
   }
 
-  async getFirstItem() {}
-
   async updateLesson(
     id: number,
     updateLessonDto: UpdateLessonDto,
@@ -120,7 +124,8 @@ export class LessonService {
           name: updateLessonDto.name.trim(),
           type: updateLessonDto.type,
           duration:
-            updateLessonDto.type === 'LECTURE'
+            updateLessonDto.type === 'LECTURE' ||
+            updateLessonDto.type === 'ATTESTATION'
               ? null
               : updateLessonDto.duration,
         },
@@ -146,7 +151,7 @@ export class LessonService {
     }
   }
 
-  async removeLesson(id: number) {
+  async removeLesson(id: number, sheetName: string = 'Расписание') {
     try {
       const lessonCronJobs =
         await this.cronJobService.getCronJobsForLessonFromDb(id);
@@ -163,9 +168,12 @@ export class LessonService {
         select: lessonSelectObj,
       });
 
-      const groupIndex = await this.sheetService.findIndex(lesson.group.name);
+      const groupIndex = await this.sheetService.findIndex(
+        lesson.group.name,
+        sheetName,
+      );
       await this.sheetService.writeLessonToSheet(
-        'Расписание',
+        sheetName,
         groupIndex,
         lesson.day,
         {
@@ -185,43 +193,48 @@ export class LessonService {
   async getFromGoogleSheet() {
     try {
       console.log('Получение расписания из таблицы');
-      const { lastIndex } = await this.sheetService.getRangeSize();
 
-      const data: string[][] = await this.sheetService.readRangeFromSheet(
-        'Расписание',
-        `Расписание!${sheetTitlesRange[0]}1:${
-          sheetTitlesRange[lastIndex - 1]
-        }29`,
-      );
+      const scheduleLists = ['Расписание', 'Аттестация'];
 
-      const obj: LessonScheduleObject = {};
+      for (const name of scheduleLists) {
+        const { lastIndex } = await this.sheetService.getRangeSize(name);
 
-      for (let i = 0; i < data[0].length; i++) {
-        for (let j = 0; j < data.length - 4; j += 4) {
-          if (!obj[data[0][i]]) {
-            obj[data[0][i]] = [];
-            obj[data[0][i]].push({
-              name: data[j + 1][i],
-              time: data[j + 2][i],
-              duration: data[j + 3][i] ? +data[j + 3][i] : null,
-              type: data[j + 4][i],
-            });
-          } else {
-            obj[data[0][i]].push({
-              name: data[j + 1][i],
-              time: data[j + 2][i],
-              duration: data[j + 3][i] ? +data[j + 3][i] : null,
-              type: data[j + 4][i],
-            });
+        const data: string[][] = await this.sheetService.readRangeFromSheet(
+          name,
+          `${name}!${sheetTitlesRange[0]}1:${
+            sheetTitlesRange[lastIndex - 1]
+          }29`,
+        );
+
+        // console.log('lastIndex: ', lastIndex, 'data: ', data);
+
+        const obj: LessonScheduleObject = {};
+
+        for (let i = 0; i < data[0].length; i++) {
+          for (let j = 0; j < data.length - 4; j += 4) {
+            if (!obj[data[0][i]]) {
+              obj[data[0][i]] = [];
+              obj[data[0][i]].push({
+                name: data[j + 1][i],
+                time: data[j + 2][i],
+                duration: data[j + 3][i] ? +data[j + 3][i] : null,
+                type: data[j + 4][i],
+              });
+            } else {
+              obj[data[0][i]].push({
+                name: data[j + 1][i],
+                time: data[j + 2][i],
+                duration: data[j + 3][i] ? +data[j + 3][i] : null,
+                type: data[j + 4][i],
+              });
+            }
           }
         }
-      }
 
-      // console.log('full obj: ', obj);
-
-      for (const item of Object.entries(obj)) {
-        // console.log('item of full obj: ', item);
-        await this.checkGoogleSchedule(item);
+        for (const item of Object.entries(obj)) {
+          // console.log('item of full obj: ', item);
+          await this.checkGoogleSchedule(name, item);
+        }
       }
 
       await console.log('Обновление расписания завершено');
@@ -231,7 +244,10 @@ export class LessonService {
     }
   }
 
-  async checkGoogleSchedule(item: [string, LessonObj[]]) {
+  async checkGoogleSchedule(
+    sheetName: string = 'Расписание',
+    item: [string, LessonObj[]],
+  ) {
     try {
       const slugName = slugify(item[0], {
         locale: 'en',
@@ -239,7 +255,6 @@ export class LessonService {
       });
 
       const _group = await this.groupService.getBySlug(slugName);
-      // const existedLessons = await this.getByGroupId(_group.id);
 
       let index = 1;
       for (const lesson of item[1]) {
@@ -257,11 +272,17 @@ export class LessonService {
                 {
                   day,
                 },
+                !!lesson.type
+                  ? {
+                      type: getLessonType(lesson.type),
+                    }
+                  : {},
               ],
             },
           });
           // console.log('deleted Lesson: ' + JSON.stringify(deletedLesson));
-          if (deletedLesson) await this.removeLesson(deletedLesson.id);
+          if (deletedLesson)
+            await this.removeLesson(deletedLesson.id, sheetName);
           index++;
           continue;
         }
@@ -275,6 +296,11 @@ export class LessonService {
               {
                 day,
               },
+              !!lesson.type
+                ? {
+                    type: getLessonType(lesson.type),
+                  }
+                : {},
             ],
           },
           select: lessonSelectObj,
@@ -287,25 +313,6 @@ export class LessonService {
             _lesson.time != lesson.time ||
             _lesson.type != getLessonType(lesson.type)
           ) {
-            // console.log(
-            //   '_lesson: ',
-            //   JSON.stringify({
-            //     name: _lesson.name,
-            //     time: _lesson.time,
-            //     duration: _lesson.duration,
-            //     type: _lesson.type,
-            //   }),
-            // );
-            //
-            // console.log(
-            //   'lesson: ',
-            //   JSON.stringify({
-            //     name: lesson.name,
-            //     time: lesson.time,
-            //     duration: lesson.duration,
-            //     type: getLessonType(lesson.type),
-            //   }),
-            // );
             await this.updateLesson(_lesson.id, {
               time: lesson.time,
               name: lesson.name.trim(),
@@ -314,7 +321,7 @@ export class LessonService {
             });
           }
         } else {
-          await this.createLesson({
+          await this.createLesson(sheetName, {
             name: lesson.name,
             time: lesson.time,
             day: day,
@@ -403,6 +410,26 @@ export class LessonService {
               lessonId: lesson.id,
               telegramId: lesson.group.telegramId,
               type: CronJobType.LESSON,
+              actions: [],
+            },
+            lesson: lesson,
+            type: 'hour',
+          });
+          break;
+        case 'ATTESTATION':
+          const jobNameForTest = `${lesson.id}-${getDayByNumber(dayNumber)}-${
+            lesson.time
+          }`;
+          const jobTimeForTest = `${lessonTime.minutes} ${lessonTime.hours} * * ${dayNumber}`;
+
+          await this.cronJobService.createLessonCronJob({
+            cronJobInfo: {
+              message: lesson.name,
+              name: jobNameForTest,
+              time: jobTimeForTest,
+              lessonId: lesson.id,
+              telegramId: lesson.group.telegramId,
+              type: CronJobType.TEST,
               actions: [],
             },
             lesson: lesson,

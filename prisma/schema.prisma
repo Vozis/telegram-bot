@@ -62,7 +62,7 @@ model Lesson {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([groupId, day, time], name: "compositeTime")
+  @@unique([type, groupId, day, time], name: "compositeTime")
   @@map("lessons")
 }
 
@@ -89,6 +89,7 @@ model CronJob {
 enum CronJobType {
   LESSON
   TASK
+  TEST
 }
 
 enum LevelEnum {
@@ -101,4 +102,5 @@ enum LevelEnum {
 enum LessonTypeEnum {
   LECTURE
   SEMINAR
+  ATTESTATION
 }

@@ -152,6 +152,11 @@ export class CronJobService implements OnModuleInit {
           reminderText =
             'Уважаемые студенты, сегодня у Вас по расписанию лекция для самостоятельного изучения. На платформе Odin ознакомьтесь с материалами и завершите активность.';
           break;
+        case 'ATTESTATION':
+          reminderText =
+            createLessonCronJobDto.cronJobInfo.message ||
+            'Уважаемые студенты, на этой неделе у вас аттестация! не забывайте проходить занятия';
+          break;
       }
 
       const newCronJob = await this.createCronJobForDb({

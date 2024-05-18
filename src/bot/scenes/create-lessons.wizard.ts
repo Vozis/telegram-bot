@@ -222,7 +222,7 @@ export class CreateLessonScene {
       if (!regexp.test(msg)) return 'Это не число. Попробуй еще раз';
       ctx.wizard.state['duration'] = msg;
       await ctx.scene.leave();
-      await this.lessonService.createLesson({
+      await this.lessonService.createLesson('Расписание', {
         day: ctx.wizard.state.day,
         time: `${ctx.wizard.state.hour}:${ctx.wizard.state.minutes}`,
         name: ctx.wizard.state.lessonName,

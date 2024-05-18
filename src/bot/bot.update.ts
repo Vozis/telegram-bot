@@ -211,12 +211,6 @@ export class BotUpdate implements OnModuleDestroy {
                   callback_data: Actions.SyncSchedule,
                 },
               ],
-              // [
-              //   {
-              //     text: 'Обновить задания в группах',
-              //     callback_data: Actions.UpdateTasks,
-              //   },
-              // ],
             ],
           },
         })

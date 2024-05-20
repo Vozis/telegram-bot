@@ -30,13 +30,12 @@ const sessions = new LocalSession({
         token: configService.get<string>('BOT_TOKEN'),
         middlewares: [sessions.middleware()],
         include: [BotModule],
+        options: {
+          handlerTimeout: Infinity,
+        },
       }),
       inject: [ConfigService],
     }),
-    // TelegrafModule.forRoot({
-    //   middlewares: [sessions.middleware()],
-    //   token: process.env.BOT_TOKEN,
-    // }),
     GroupModule,
     UserModule,
     BotModule,
